@@ -32,18 +32,26 @@ export function ApplicationDetailModal({
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
-    if (!isOpen || !application) {
-      setHistory([]);
-      return;
-    }
+    if (!isOpen || !application) return;
 
+    let isMounted = true;
     const currentUserId = userId || application.user_id;
     if (currentUserId && application.id) {
-      setLoadingHistory(true);
       fetchStatusHistory(currentUserId, application.id)
-        .then((data) => setHistory(data))
-        .finally(() => setLoadingHistory(false));
+        .then((data) => {
+          if (isMounted) {
+            setHistory(data);
+            setLoadingHistory(false);
+          }
+        })
+        .catch(() => {
+          if (isMounted) setLoadingHistory(false);
+        });
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [isOpen, application, userId]);
 
   if (!isOpen || !application) return null;

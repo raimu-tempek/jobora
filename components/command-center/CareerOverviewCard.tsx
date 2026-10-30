@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Application } from "@/types/application";
 import { RecruitmentEvent } from "@/types/recruitment";
-import { isTestTaskGroup, isInterviewGroup, formatDate } from "@/lib/applications/format";
-import { Briefcase, ArrowRight, Video, Calendar, Clock, AlertCircle } from "lucide-react";
+import { isTestTaskGroup, isInterviewGroup } from "@/lib/applications/format";
+import { Briefcase, ArrowRight, Video, Calendar, Clock } from "lucide-react";
 import styles from "./CommandCenter.module.css";
 
 export interface CareerOverviewCardProps {
@@ -17,6 +17,8 @@ export function CareerOverviewCard({
   applications,
   events,
 }: CareerOverviewCardProps) {
+  const [currentTime] = useState(() => Date.now());
+
   // Compute stage breakdown
   let submittedCount = 0;
   let testTaskCount = 0;
@@ -39,9 +41,8 @@ export function CareerOverviewCard({
   }
 
   // Filter top 2 upcoming active events
-  const now = Date.now();
   const upcomingEvents = events
-    .filter((e) => !e.is_completed && new Date(e.start_time).getTime() >= now - 3600000)
+    .filter((e) => !e.is_completed && new Date(e.start_time).getTime() >= currentTime - 3600000)
     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
     .slice(0, 2);
 

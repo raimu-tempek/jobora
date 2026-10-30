@@ -15,13 +15,12 @@ import {
   TrendingUp,
   TrendingDown,
   PieChart,
-  PlusCircle,
 } from "lucide-react";
 import styles from "./CommandCenter.module.css";
 
 export interface FinanceOverviewCardProps {
   summary: FinanceSummary;
-  accounts: FinancialAccount[];
+  accounts?: FinancialAccount[];
   transactions: FinancialTransaction[];
   budgets: FinancialBudget[];
   onAddTransaction?: () => void;
@@ -29,7 +28,7 @@ export interface FinanceOverviewCardProps {
 
 export function FinanceOverviewCard({
   summary,
-  accounts,
+  accounts = [],
   transactions,
   budgets,
   onAddTransaction,
@@ -62,7 +61,8 @@ export function FinanceOverviewCard({
             <span>Keuangan & Anggaran</span>
           </h3>
           <p className={styles.cardSubtitle}>
-            Ringkasan arus kas, saldo gabungan, dan penggunaan budget bulan ini
+            {accounts.length > 0 ? `${accounts.length} akun aktif • ` : ""}
+            Arus kas dan pengeluaran bulan ini
           </p>
         </div>
 
@@ -196,12 +196,22 @@ export function FinanceOverviewCard({
 
       {/* Quick Action Links */}
       <div className="pt-2 border-t border-gray-100 flex items-center gap-2 flex-wrap">
-        <Link
-          href="/finance/transactions"
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-        >
-          ➕ Catat Transaksi
-        </Link>
+        {onAddTransaction ? (
+          <button
+            type="button"
+            onClick={onAddTransaction}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition cursor-pointer"
+          >
+            ➕ Catat Transaksi
+          </button>
+        ) : (
+          <Link
+            href="/finance/transactions"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+          >
+            ➕ Catat Transaksi
+          </Link>
+        )}
         <Link
           href="/finance/budgets"
           className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"

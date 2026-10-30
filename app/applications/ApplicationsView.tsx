@@ -98,7 +98,7 @@ export function ApplicationsView({
   // Recruitment Events
   const [events, setEvents] = useState<RecruitmentEvent[]>([]);
 
-  const loadEvents = useCallback(async (uid: string) => {
+  const refreshEvents = useCallback(async (uid: string) => {
     if (!uid) return;
     try {
       const list = await fetchRecruitmentEvents(uid);
@@ -109,10 +109,20 @@ export function ApplicationsView({
   }, []);
 
   useEffect(() => {
-    if (userId) {
-      loadEvents(userId);
-    }
-  }, [userId, loadEvents]);
+    if (!userId) return;
+    let isMounted = true;
+    fetchRecruitmentEvents(userId)
+      .then((list) => {
+        if (isMounted) {
+          setEvents(list);
+        }
+      })
+      .catch((err) => console.warn("Failed loading recruitment events:", err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   // Filters and sorting
   const [activeFilter, setActiveFilter] = useState("Semua");
@@ -389,7 +399,7 @@ export function ApplicationsView({
     }
     const res = await saveRecruitmentEvent(userId, eventData);
     if (res.success && res.event) {
-      await loadEvents(userId);
+      await refreshEvents(userId);
       showToast("Jadwal agenda berhasil disimpan!");
       return { success: true };
     }
@@ -400,7 +410,7 @@ export function ApplicationsView({
     if (!userId) return false;
     const res = await deleteRecruitmentEvent(userId, eventId);
     if (res.success) {
-      await loadEvents(userId);
+      await refreshEvents(userId);
       showToast("Jadwal agenda berhasil dihapus!");
       return true;
     }
@@ -411,7 +421,7 @@ export function ApplicationsView({
     if (!userId) return false;
     const res = await toggleEventCompletion(userId, eventId);
     if (res.success) {
-      await loadEvents(userId);
+      await refreshEvents(userId);
       showToast(
         res.is_completed
           ? "Jadwal ditandai selesai! 🎉"

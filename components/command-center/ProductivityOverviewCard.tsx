@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { RecruitmentEvent } from "@/types/recruitment";
 import { Application } from "@/types/application";
 import { getFollowUps } from "@/lib/applications/reminders";
 import {
-  Calendar,
   Clock,
   ArrowRight,
   AlertTriangle,
@@ -24,6 +23,7 @@ export function ProductivityOverviewCard({
   events,
   applications,
 }: ProductivityOverviewCardProps) {
+  const [currentTime] = useState(() => Date.now());
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   // Events today
@@ -37,28 +37,19 @@ export function ProductivityOverviewCard({
 
   // Deadlines in next 7 days
   const upcomingDeadlines = useMemo(() => {
-    const now = Date.now();
-    const next7Days = now + 7 * 24 * 60 * 60 * 1000;
+    const next7Days = currentTime + 7 * 24 * 60 * 60 * 1000;
     return events.filter((e) => {
       if (e.is_completed) return false;
       const isDeadline =
         e.event_type.toLowerCase().includes("deadline") ||
         e.title.toLowerCase().includes("deadline");
       const eventTime = new Date(e.start_time).getTime();
-      return isDeadline && eventTime >= now - 3600000 && eventTime <= next7Days;
+      return isDeadline && eventTime >= currentTime - 3600000 && eventTime <= next7Days;
     });
-  }, [events]);
+  }, [events, currentTime]);
 
   // Follow-up reminders
   const followUpApps = useMemo(() => getFollowUps(applications), [applications]);
-
-  const appsById = useMemo(() => {
-    const map: Record<string, Application> = {};
-    applications.forEach((a) => {
-      map[a.id] = a;
-    });
-    return map;
-  }, [applications]);
 
   return (
     <div className={styles.sectionCard}>

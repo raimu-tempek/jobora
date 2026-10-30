@@ -4,7 +4,6 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout";
 import {
-  Upload,
   Plus,
   CheckCircle2,
   Download,
@@ -13,7 +12,6 @@ import {
   Calendar,
   LayoutDashboard,
   BarChart3,
-  CalendarDays,
 } from "lucide-react";
 import {
   FollowUpReminderBanner,
@@ -113,27 +111,25 @@ export function DashboardView({
   const [recruitmentEvents, setRecruitmentEvents] = useState<RecruitmentEvent[]>([]);
   const [statusHistory, setStatusHistory] = useState<ApplicationStatusHistory[]>([]);
 
-  const loadData = useCallback(async (uid: string) => {
+  const [currentTime] = useState(() => Date.now());
+
+  const refreshData = useCallback(async (uid: string) => {
     if (!uid) return;
     try {
-      // 1. Finance data
       const accs = getAccounts(uid);
       const cats = getCategories(uid);
       const txs = getTransactions(uid, { range: "this_month" });
       const bgs = getBudgets(uid, currentMonthStr);
       const summary = getFinanceSummary(uid, { range: "this_month" });
+      const evts = await fetchRecruitmentEvents(uid);
 
       setAccounts(accs);
       setCategories(cats);
       setTransactions(txs);
       setBudgets(bgs);
       setFinanceSummary(summary);
-
-      // 2. Recruitment Events
-      const evts = await fetchRecruitmentEvents(uid);
       setRecruitmentEvents(evts);
 
-      // 3. Status History (from first application or all)
       if (applications.length > 0) {
         const histPromises = applications.slice(0, 5).map((app) =>
           fetchStatusHistory(uid, app.id)
@@ -142,15 +138,50 @@ export function DashboardView({
         setStatusHistory(results.flat());
       }
     } catch (err) {
-      console.warn("Failed loading command center data:", err);
+      console.warn("Failed refreshing command center data:", err);
     }
   }, [applications, currentMonthStr]);
 
   useEffect(() => {
-    if (userId) {
-      loadData(userId);
-    }
-  }, [userId, loadData]);
+    if (!userId) return;
+    let isMounted = true;
+
+    (async () => {
+      try {
+        const accs = getAccounts(userId);
+        const cats = getCategories(userId);
+        const txs = getTransactions(userId, { range: "this_month" });
+        const bgs = getBudgets(userId, currentMonthStr);
+        const summary = getFinanceSummary(userId, { range: "this_month" });
+        const evts = await fetchRecruitmentEvents(userId);
+
+        let historyItems: ApplicationStatusHistory[] = [];
+        if (applications.length > 0) {
+          const histPromises = applications.slice(0, 5).map((app) =>
+            fetchStatusHistory(userId, app.id)
+          );
+          const results = await Promise.all(histPromises);
+          historyItems = results.flat();
+        }
+
+        if (isMounted) {
+          setAccounts(accs);
+          setCategories(cats);
+          setTransactions(txs);
+          setBudgets(bgs);
+          setFinanceSummary(summary);
+          setRecruitmentEvents(evts);
+          setStatusHistory(historyItems);
+        }
+      } catch (err) {
+        console.warn("Failed loading command center data:", err);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId, applications, currentMonthStr]);
 
   // Modals state
   const [isAddAppModalOpen, setIsAddAppModalOpen] = useState(false);
@@ -183,15 +214,14 @@ export function DashboardView({
 
   // Compute Upcoming Events (Interviews & Deadlines in next 7 days)
   const upcomingEventsCount = useMemo(() => {
-    const now = Date.now();
-    const next7Days = now + 7 * 24 * 60 * 60 * 1000;
+    const next7Days = currentTime + 7 * 24 * 60 * 60 * 1000;
     return recruitmentEvents.filter(
       (e) =>
         !e.is_completed &&
-        new Date(e.start_time).getTime() >= now - 3600000 &&
+        new Date(e.start_time).getTime() >= currentTime - 3600000 &&
         new Date(e.start_time).getTime() <= next7Days
     ).length;
-  }, [recruitmentEvents]);
+  }, [recruitmentEvents, currentTime]);
 
   // Compute 6 Top Stats for Career Analytics
   const topStats = useMemo(
@@ -220,7 +250,7 @@ export function DashboardView({
     if (res.success) {
       setIsAddAppModalOpen(false);
       showToast("Lamaran berhasil disimpan!");
-      if (userId) loadData(userId);
+      if (userId) refreshData(userId);
     } else {
       alert(res.error || "Gagal menyimpan lamaran.");
     }
@@ -231,7 +261,7 @@ export function DashboardView({
     createTransaction(userId, txData as Parameters<typeof createTransaction>[1]);
     setIsAddTxModalOpen(false);
     showToast("Transaksi berhasil dicatat!");
-    loadData(userId);
+    refreshData(userId);
   };
 
   const handleSaveEvent = async (eventData: Parameters<typeof saveRecruitmentEvent>[1]) => {
@@ -240,7 +270,7 @@ export function DashboardView({
     if (res.success) {
       setIsEventModalOpen(false);
       showToast("Jadwal agenda berhasil disimpan!");
-      loadData(userId);
+      refreshData(userId);
       return { success: true };
     }
     return { success: false, error: res.error || "Gagal menyimpan jadwal" };
@@ -475,7 +505,7 @@ export function DashboardView({
             categories={categories}
             onClose={() => setIsAddTxModalOpen(false)}
             onSave={handleSaveTransaction}
-            onSuccess={() => loadData(userId)}
+            onSuccess={() => refreshData(userId)}
           />
         )}
 

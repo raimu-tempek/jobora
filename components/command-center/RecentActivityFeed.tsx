@@ -9,8 +9,6 @@ import {
   Activity,
   Briefcase,
   Calendar,
-  Wallet,
-  ArrowRight,
   TrendingUp,
   TrendingDown,
   CheckCircle2,
