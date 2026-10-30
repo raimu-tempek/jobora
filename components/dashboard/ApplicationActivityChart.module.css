@@ -1,0 +1,185 @@
+/* Card chrome styled with CSS Modules & Jobora Design System Tokens */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--text-headline-md-size);
+  line-height: var(--text-headline-md-line);
+  font-weight: var(--text-headline-md-weight);
+  letter-spacing: var(--text-headline-md-tracking);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.toggleGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xs);
+}
+
+.toggleButton {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+  transition: all 0.15s ease;
+}
+
+.toggleButtonActive {
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-xs);
+  outline: 1px solid var(--color-border);
+}
+
+.toggleButtonInactive {
+  color: var(--color-text-secondary);
+}
+
+.toggleButtonInactive:hover {
+  color: var(--color-primary);
+}
+
+.chartContainer {
+  width: 100%;
+  min-height: 280px;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: var(--space-xs);
+  -webkit-overflow-scrolling: touch;
+}
+
+.chartFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+  font-family: var(--font-body);
+  font-size: var(--text-caption-size);
+  color: var(--color-text-muted);
+}
+
+.summaryText {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.summaryCount {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* === Bklit CSS Variable Mapping (Scoped to chart) === */
+.chartScope {
+  --chart-line-primary: var(--chart-line);
+  --chart-line: var(--chart-line);
+  --chart-line-secondary: var(--chart-line);
+  --chart-grid: var(--chart-grid);
+  --chart-background: var(--color-surface);
+  --chart-foreground: var(--color-text);
+  --chart-foreground-muted: var(--color-text-muted);
+  --chart-label: var(--color-text-muted);
+  --chart-crosshair: var(--color-primary);
+  --chart-brush-border: var(--chart-grid);
+  --chart-tooltip-background: var(--color-surface);
+  --chart-tooltip-foreground: var(--color-text);
+  --chart-tooltip-muted: var(--color-text-muted);
+  --chart-marker-background: var(--color-surface);
+  --chart-marker-border: var(--chart-line);
+  --chart-marker-foreground: var(--color-text);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  gap: 8px;
+  text-align: center;
+  padding: var(--space-md);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+}
+
+.emptyStateTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.emptyStateDesc {
+  font-size: var(--text-caption-size);
+  color: var(--color-text-muted);
+  max-width: 340px;
+}
+
+.emptyStateButton {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  border: 1px solid rgba(16, 124, 116, 0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.emptyStateButton:hover {
+  background: #ccfbf1;
+  border-color: var(--color-primary);
+}

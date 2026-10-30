@@ -1,0 +1,98 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.labelGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.itemIcon {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.label {
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.value {
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-medium-weight);
+  line-height: var(--text-body-line);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.percentage {
+  font-family: var(--font-body);
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* Progress bar track */
+.track {
+  width: 100%;
+  background: var(--chart-grid); /* #F1F5F9 — matches Design System spec */
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+/* Fill — width + color are set inline from props */
+.fill {
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+/* Footer slot (e.g. Tingkat Konversi row) */
+.footer {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+}

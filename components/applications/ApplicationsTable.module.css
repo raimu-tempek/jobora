@@ -1,0 +1,257 @@
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 880px;
+  text-align: left;
+}
+
+/* Header Row */
+.headerRow {
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.th {
+  font-family: var(--font-body);
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-caption-line);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px 16px;
+  white-space: nowrap;
+}
+
+.thCompany {
+  padding-left: 20px;
+}
+
+.thAction {
+  padding-right: 20px;
+  text-align: right;
+}
+
+/* Body Rows */
+.row {
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.12s ease;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: var(--color-background);
+}
+
+.td {
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  color: var(--color-text);
+  padding: 14px 16px;
+  vertical-align: middle;
+}
+
+.tdCompany {
+  padding-left: 20px;
+}
+
+.tdPosition {
+  color: var(--color-text);
+  max-width: 200px;
+}
+
+.positionText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--text-body-medium-weight);
+}
+
+.tdDate {
+  white-space: nowrap;
+}
+
+.dateText {
+  color: var(--color-text-muted);
+  font-size: var(--text-caption-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.tdAction {
+  padding-right: 20px;
+  text-align: right;
+}
+
+/* Company Cell */
+.companyCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.companyNameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.companyName {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.followUpBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.followUpDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-warning);
+}
+
+.companyMeta {
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+  color: var(--color-text-muted);
+}
+
+/* Job Type Badge (Neutral soft-teal per Design System spec) */
+.jobTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  border: 1px solid rgba(16, 124, 116, 0.2);
+  font-size: var(--text-label-sm-size);
+  font-weight: var(--text-label-weight);
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+/* Platform Cell */
+.platformCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.platformIcon {
+  font-size: 16px;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.platformName {
+  font-size: var(--text-body-size);
+  color: var(--color-text-secondary);
+}
+
+/* Action Buttons */
+.actionButtonGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.actionButton:hover {
+  background: var(--color-border);
+  color: var(--color-text);
+}
+
+.editButton:hover {
+  background: #e6faf7;
+  color: #107c74;
+}
+
+.deleteButton:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.actionButton span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Empty State */
+.emptyContainer {
+  padding: var(--space-xl) var(--space-md);
+  display: flex;
+  justify-content: center;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-xs);
+  max-width: 320px;
+}
+
+.emptyIcon {
+  font-size: 36px;
+  color: var(--color-text-muted);
+  opacity: 0.6;
+  margin-bottom: var(--space-xs);
+}
+
+.emptyTitle {
+  font-family: var(--font-heading);
+  font-size: var(--text-headline-sm-size);
+  font-weight: var(--text-headline-sm-weight);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.emptySubtitle {
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}

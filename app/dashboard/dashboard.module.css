@@ -1,0 +1,237 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* ── Header greeting ──────────────────────────────── */
+.pageHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.greeting {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.greetingCaption {
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.greetingName {
+  font-family: var(--font-heading);
+  font-size: var(--text-headline-lg-size);
+  font-weight: var(--text-headline-lg-weight);
+  line-height: var(--text-headline-lg-line);
+  letter-spacing: var(--text-headline-lg-tracking);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.importButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 10px var(--space-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-medium-weight);
+  line-height: var(--text-body-line);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.importButton:hover {
+  background: var(--color-background);
+  border-color: var(--color-text-secondary);
+}
+
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 10px var(--space-md);
+  background: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(16, 124, 116, 0.3);
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-medium-weight);
+  line-height: var(--text-body-line);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.addButton:hover {
+  background: var(--color-primary-hover);
+}
+
+.addButton:active {
+  transform: scale(0.98);
+}
+
+.addButtonIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ── KPI grid ─────────────────────────────────────── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+}
+
+/* ── Two-column layout (lg:col-8 / col-4) ─────────── */
+.twoColGrid {
+  display: grid;
+  grid-template-columns: 8fr 4fr;
+  gap: var(--space-md);
+  align-items: start;
+}
+
+/* Shared card chrome */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-lg);
+  overflow: hidden;
+}
+
+.cardTitle {
+  font-family: var(--font-heading);
+  font-size: var(--text-headline-sm-size);
+  font-weight: var(--text-headline-sm-weight);
+  line-height: var(--text-headline-sm-line);
+  letter-spacing: var(--text-headline-sm-tracking);
+  color: var(--color-text);
+  margin: 0 0 var(--space-md) 0;
+}
+
+/* The chart card has no extra card chrome — ApplicationActivityChart brings its own */
+.colMain {
+  min-width: 0;
+}
+
+/* Chart wrapper — same grid column, no card chrome (chart component is the card) */
+.colMainChart {
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Rail cards DO have the card chrome */
+.colRail {
+  min-width: 0;
+}
+
+/* ── Conversion rate footer row ───────────────────── */
+.conversionRate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-background);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.conversionLabel {
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  color: var(--color-text-secondary);
+}
+
+.conversionValue {
+  font-family: var(--font-heading);
+  font-size: var(--text-headline-sm-size);
+  font-weight: var(--text-headline-sm-weight);
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Mobile ────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .twoColGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pageHeader {
+    align-items: flex-start;
+  }
+}
+
+/* Tablet — keep 2-col for kpi, stack chart/rail */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .twoColGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--color-primary);
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm), 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  font-weight: var(--text-label-weight);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  z-index: 100;
+  animation: slideUp 0.25s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

@@ -1,0 +1,96 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: 16px 20px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (min-width: 640px) {
+  .container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.infoText {
+  font-family: var(--font-body);
+  font-size: var(--text-label-size);
+  line-height: var(--text-label-line);
+  color: var(--color-text-muted);
+}
+
+.controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: center;
+}
+
+@media (min-width: 640px) {
+  .controls {
+    align-self: auto;
+  }
+}
+
+.chevronButton {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chevronButton:hover:not(:disabled) {
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.chevronButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.chevronButton span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pageButton {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.pageButtonActive {
+  background: var(--color-primary);
+  color: #ffffff;
+  font-weight: var(--text-label-weight);
+  box-shadow: var(--shadow-xs);
+}
+
+.pageButtonInactive {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.pageButtonInactive:hover {
+  background: var(--color-background);
+  color: var(--color-text);
+}

@@ -1,0 +1,145 @@
+/**
+ * Design tokens — Jobora (v8, Teal Executive SaaS)
+ * Sumber: docs/DESIGN_SYSTEM-Jobora.md
+ *
+ * Catatan: di config mockup asli ada 2 kandidat token --background
+ * (#F8FAFC dan #F2FAF8). Dipilih #F8FAFC karena itu yang benar-benar
+ * dipakai di markup (#F2FAF8 di-drop, lihat catatan di DESIGN_SYSTEM.md).
+ */
+
+:root {
+  /* === Core === */
+  --color-primary: #107c74;
+  --color-primary-hover: #0d6861;
+  --color-primary-soft: #e6faf7;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e2eaf0;
+  --color-text: #132a30;
+  --color-text-secondary: #526970;
+  --color-text-muted: #627d84;
+
+  /* === Chart ===
+   * Token asli Design System: --chart-line (lihat DESIGN_SYSTEM-Jobora.md).
+   * Bklit UI punya nama variable sendiri (--chart-line-primary, dst) yang
+   * di-map di dalam ApplicationActivityChart.module.css:
+   *   --chart-line-primary: var(--chart-line);
+   */
+  --chart-line: #107c74;
+  --chart-line-fill-start: rgba(16, 124, 116, 0.18);
+  --chart-line-fill-mid: rgba(167, 243, 208, 0.04);
+  --chart-line-fill-end: rgba(255, 255, 255, 0);
+  --chart-grid: #e2e8f0;
+  --chart-point-glow: #a7f3d0;
+
+  /* === Semantic states === */
+  --color-success: #10b981;
+  --color-success-bg: #dcfce7;
+  --color-error: #dc2626;
+  --color-error-bg: #fee2e2;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-info: var(--color-primary);
+  --color-info-bg: var(--color-primary-soft);
+  --color-purple: #8b5cf6;
+  --color-purple-bg: #f3e8ff;
+  --color-orange: #ea580c;
+  --color-orange-bg: #ffedd5;
+
+  /* === Status badge (status lamaran) ===
+   * value DB tetap enum lama (Submitted, Test, Task, dst) — ini cuma token warna,
+   * mapping label tampilan tetap di layer presentasi (lib/applications/format.ts).
+   */
+  --status-submitted-text: var(--color-primary);
+  --status-submitted-bg: var(--color-primary-soft);
+  --status-test-text: var(--color-warning);
+  --status-test-bg: var(--color-warning-bg);
+  --status-task-text: var(--color-orange);
+  --status-task-bg: var(--color-orange-bg);
+  --status-interview-text: var(--color-purple);
+  --status-interview-bg: var(--color-purple-bg);
+  --status-offering-text: var(--color-success);
+  --status-offering-bg: var(--color-success-bg);
+  --status-rejected-text: var(--color-error);
+  --status-rejected-bg: var(--color-error-bg);
+
+  /* === Spacing === */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --gutter: 20px;
+  --gutter-mobile: 12px;
+  --content-margin: 32px;
+  --content-margin-mobile: 16px;
+
+  /* === Radius === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+
+  /* === Shadows (nilai default Tailwind shadow-xs / shadow-sm, ditulis ulang
+   * supaya tidak bergantung ke Tailwind di halaman yang pakai CSS Modules) === */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-sidebar: 0 1px 10px rgba(16, 124, 116, 0.02);
+
+  /* === Layout === */
+  --sidebar-width: 240px;
+  --topbar-height: 64px;
+  --content-max-width: 1280px; /* setara max-w-7xl */
+
+  /* === Typography ===
+   * Beberapa class di mockup asli (text-caption, font-caption, text-stat-value)
+   * dipakai tapi tidak pernah didefinisikan di Tailwind config-nya — nilainya
+   * diformalkan di sini supaya tidak ikut ketarik bug yang sama.
+   */
+  --font-heading: var(--font-manrope), sans-serif;
+  --font-body: var(--font-hanken-grotesk), sans-serif;
+
+  --text-headline-lg-size: 28px;
+  --text-headline-lg-line: 36px;
+  --text-headline-lg-weight: 700;
+  --text-headline-lg-tracking: -0.02em;
+
+  --text-headline-md-size: 22px;
+  --text-headline-md-line: 28px;
+  --text-headline-md-weight: 600;
+  --text-headline-md-tracking: -0.015em;
+
+  --text-headline-sm-size: 18px;
+  --text-headline-sm-line: 24px;
+  --text-headline-sm-weight: 600;
+  --text-headline-sm-tracking: -0.01em;
+
+  --text-stat-value-size: 32px;
+  --text-stat-value-line: 36px;
+  --text-stat-value-weight: 700;
+  --text-stat-value-tracking: -0.02em;
+
+  --text-body-size: 14px;
+  --text-body-line: 20px;
+  --text-body-weight: 400;
+
+  --text-body-medium-weight: 500;
+
+  --text-body-lg-size: 16px;
+  --text-body-lg-line: 24px;
+  --text-body-lg-weight: 400;
+
+  --text-label-size: 13px;
+  --text-label-line: 16px;
+  --text-label-weight: 600;
+  --text-label-tracking: 0.01em;
+
+  --text-label-sm-size: 11px;
+  --text-label-sm-line: 14px;
+  --text-label-sm-weight: 600;
+  --text-label-sm-tracking: 0.02em;
+
+  --text-caption-size: 12px;
+  --text-caption-line: 16px;
+  --text-caption-weight: 400;
+}

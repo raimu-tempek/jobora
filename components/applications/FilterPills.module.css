@@ -1,0 +1,81 @@
+.scrollContainer {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+/* Hide scrollbar while preserving scroll functionality */
+.scrollContainer::-webkit-scrollbar {
+  display: none;
+}
+.scrollContainer {
+  scrollbar-width: none;
+}
+
+.pillList {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: max-content;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-size: var(--text-label-size);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.pillActive {
+  background: var(--color-primary);
+  color: #ffffff;
+  font-weight: var(--text-label-weight);
+  box-shadow: var(--shadow-xs);
+}
+
+.pillInactive {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+  font-weight: var(--text-body-medium-weight);
+}
+
+.pillInactive:hover {
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.label {
+  line-height: 1;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.badgeActive {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.badgeInactive {
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}

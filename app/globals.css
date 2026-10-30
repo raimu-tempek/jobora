@@ -1,0 +1,141 @@
+@import "../styles/tokens.css";
+
+:root {
+  --chart-line: #107c74;
+  --chart-grid: #e2e8f0;
+  --chart-point-glow: #a7f3d0;
+}
+
+/* === Base === */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  font-weight: var(--text-body-weight);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+main > :first-child {
+  margin-top: 0 !important;
+}
+main > :last-child {
+  margin-bottom: 0 !important;
+}
+
+::selection {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* === Material Symbols Outlined ===
+ * Font di-load lewat <link> di app/layout.tsx (Google Fonts), class
+ * ".material-symbols-outlined" di sini cuma nyetel render-nya.
+ * Wajib pasang aria-hidden="true" di tiap <span> ikon (lihat Accessibility
+ * di Design System) karena ini icon font, bukan SVG dengan title/role bawaan.
+ */
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  font-size: 20px;
+  line-height: 1;
+  user-select: none;
+}
+
+/* === Typography utility classes ===
+ * Mengganti class Tailwind yang dipakai di mockup asli (termasuk yang
+ * aslinya undefined: text-caption, font-caption, text-stat-value) dengan
+ * nilai yang sudah diformalkan di styles/tokens.css.
+ */
+.text-headline-lg {
+  font-family: var(--font-heading);
+  font-size: var(--text-headline-lg-size);
+  line-height: var(--text-headline-lg-line);
+  font-weight: var(--text-headline-lg-weight);
+  letter-spacing: var(--text-headline-lg-tracking);
+}
+
+.text-headline-md {
+  font-family: var(--font-heading);
+  font-size: var(--text-headline-md-size);
+  line-height: var(--text-headline-md-line);
+  font-weight: var(--text-headline-md-weight);
+  letter-spacing: var(--text-headline-md-tracking);
+}
+
+.text-headline-sm {
+  font-family: var(--font-heading);
+  font-size: var(--text-headline-sm-size);
+  line-height: var(--text-headline-sm-line);
+  font-weight: var(--text-headline-sm-weight);
+  letter-spacing: var(--text-headline-sm-tracking);
+}
+
+.text-stat-value {
+  font-family: var(--font-heading);
+  font-size: var(--text-stat-value-size);
+  line-height: var(--text-stat-value-line);
+  font-weight: var(--text-stat-value-weight);
+  letter-spacing: var(--text-stat-value-tracking);
+  font-variant-numeric: tabular-nums;
+}
+
+.text-body {
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  font-weight: var(--text-body-weight);
+}
+
+.text-body-medium {
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  font-weight: var(--text-body-medium-weight);
+}
+
+.text-body-lg {
+  font-family: var(--font-body);
+  font-size: var(--text-body-lg-size);
+  line-height: var(--text-body-lg-line);
+  font-weight: var(--text-body-lg-weight);
+}
+
+.text-label {
+  font-family: var(--font-body);
+  font-size: var(--text-label-size);
+  line-height: var(--text-label-line);
+  font-weight: var(--text-label-weight);
+  letter-spacing: var(--text-label-tracking);
+}
+
+.text-label-sm {
+  font-family: var(--font-body);
+  font-size: var(--text-label-sm-size);
+  line-height: var(--text-label-sm-line);
+  font-weight: var(--text-label-sm-weight);
+  letter-spacing: var(--text-label-sm-tracking);
+}
+
+.text-caption {
+  font-family: var(--font-body);
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+  font-weight: var(--text-caption-weight);
+  color: var(--color-text-muted);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
