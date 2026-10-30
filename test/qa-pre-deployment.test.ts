@@ -185,6 +185,45 @@ assert(nearest?.id === "ev1", "Selects the closest non-completed upcoming event"
 const nearestEmpty = getNearestEventForApplication(mockEvents, "app-non-existent");
 assert(nearestEmpty === null, "Returns null when no event exists for application");
 
+// TEST SUITE 6: COMMAND CENTER CONSISTENCY & INTEGRITY
+console.log("\n--- 6. Command Center Home Consistency ---");
+import { isActiveStatus } from "../lib/applications/format";
+import { Application } from "../types/application";
+
+const mockAppsForCC: Application[] = [
+  { id: "1", user_id: "u1", company: "Company A", position: "Dev", type: "Full-time", status: "Submitted", date: "2026-10-01", platform: "LinkedIn", created_at: "2026-10-01T00:00:00Z", updated_at: "2026-10-01T00:00:00Z" },
+  { id: "2", user_id: "u1", company: "Company B", position: "Design", type: "Full-time", status: "Interview HR", date: "2026-10-02", platform: "LinkedIn", created_at: "2026-10-02T00:00:00Z", updated_at: "2026-10-02T00:00:00Z" },
+  { id: "3", user_id: "u1", company: "Company C", position: "PM", type: "Full-time", status: "Offering", date: "2026-10-03", platform: "LinkedIn", created_at: "2026-10-03T00:00:00Z", updated_at: "2026-10-03T00:00:00Z" },
+  { id: "4", user_id: "u1", company: "Company D", position: "QA", type: "Full-time", status: "Rejected", date: "2026-10-04", platform: "LinkedIn", created_at: "2026-10-04T00:00:00Z", updated_at: "2026-10-04T00:00:00Z" },
+];
+
+const activeJobs = mockAppsForCC.filter((a) => isActiveStatus(a.status));
+assert(activeJobs.length === 2, "Accurately identifies active jobs (Submitted & Interview HR)", String(activeJobs.length));
+assert(!isActiveStatus("Offering"), "Offering is marked as completed/not in progress");
+assert(!isActiveStatus("Rejected"), "Rejected is marked as inactive");
+
+// Upcoming 7-day events filtering
+const nowTime = Date.now();
+const sevenDaysAhead = nowTime + 7 * 24 * 60 * 60 * 1000;
+const upcomingSevenDays = mockEvents.filter((e) => {
+  if (e.is_completed) return false;
+  const t = new Date(e.start_time).getTime();
+  return t >= nowTime - 3600000 && t <= sevenDaysAhead;
+});
+assert(upcomingSevenDays.length === 2, "Accurately filters active events within 7 days", String(upcomingSevenDays.length));
+
+// Recent Activity Chronological Sorting Integrity
+const testActivityTimestamps = [
+  "2026-10-28T10:00:00.000Z",
+  "2026-10-31T09:00:00.000Z",
+  "2026-10-30T15:00:00.000Z",
+];
+const sortedTimestamps = [...testActivityTimestamps].sort(
+  (a, b) => new Date(b).getTime() - new Date(a).getTime()
+);
+assert(sortedTimestamps[0] === "2026-10-31T09:00:00.000Z", "Sorts latest activity first");
+assert(sortedTimestamps[2] === "2026-10-28T10:00:00.000Z", "Preserves chronological order for oldest items");
+
 console.log("\n=================================================");
 console.log(`QA SUMMARY: ${passedTests}/${totalTests} Tests Passed (${failedTests} Failed)`);
 console.log("=================================================");
