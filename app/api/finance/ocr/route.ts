@@ -63,18 +63,19 @@ export async function POST(req: NextRequest) {
     }
 
     const promptText = `
-Anda adalah sistem OCR cerdas ekstraksi struk belanja ("Struk-Ku") untuk aplikasi pencatatan keuangan pribadi.
-Tugas Anda adalah membaca gambar struk pembayaran dan mengekstrak informasi detail transaksi dalam format JSON murni.
+Anda adalah sistem OCR cerdas ekstraksi struk belanja & dokumen transaksi keuangan ("Struk-Ku") untuk aplikasi pencatatan keuangan pribadi.
+Tugas Anda adalah membaca gambar struk pembayaran, bon kasir, atau bukti transfer/penerimaan dana, lalu mengekstrak informasi detail transaksi dalam format JSON murni.
 
 Format JSON yang wajib dihasilkan (hanya output JSON tanpa markdown codeblock tambahan):
 {
-  "merchant_name": "Nama Toko / Merchant / Merchant Name",
+  "merchant_name": "Nama Toko / Pengirim / Penerima / Merchant Name",
+  "transaction_type": "expense" (default untuk pengeluaran/belanja/tagihan) ATAU "income" (untuk bukti transfer masuk/dana diterima/slip gaji/pembayaran dari klien),
   "transaction_date": "YYYY-MM-DD",
   "transaction_time": "HH:MM",
-  "receipt_number": "Nomor Struk / Invoice No",
+  "receipt_number": "Nomor Struk / Invoice No / No Referensi",
   "items": [
     {
-      "name": "Nama Produk / Barang",
+      "name": "Nama Produk / Keterangan Transaksi",
       "quantity": 1,
       "unit_price": 15000,
       "subtotal": 15000
@@ -84,12 +85,17 @@ Format JSON yang wajib dihasilkan (hanya output JSON tanpa markdown codeblock ta
   "tax": 0,
   "discount": 0,
   "grand_total": 15000,
-  "payment_method": "Tunai / QRIS / Debit / dsb",
+  "payment_method": "Tunai / QRIS / Transfer Bank / Debit / dsb",
   "suggested_category": "Makanan & Minuman",
   "confidence_notes": "Catatan singkat pembacaan struk"
 }
 
+Panduan Penentuan transaction_type:
+- "expense": Struk kasir belanja, struk restoran/minimarket, tagihan listrik/air/pulsa, bukti transfer uang keluar, tiket transportasi.
+- "income": Bukti transfer uang masuk (dana masuk / transfer diterima), slip gaji, bukti pelunasan invoice oleh klien, hasil penjualan, hadiah, cashback/refund.
+
 Pilihan suggested_category (pilih 1 yang paling sesuai):
+Jika transaction_type === "expense":
 - "Makanan & Minuman" (Restoran, Cafe, Makanan, Minuman, Minimarket belanja camilan/sembako)
 - "Transportasi" (SPBU, Bensin, Tiket Kereta, Parkir, Tol, Ojek Online)
 - "Belanja" (Pakaian, Elektronik, Swalayan besar)
@@ -101,10 +107,17 @@ Pilihan suggested_category (pilih 1 yang paling sesuai):
 - "Langganan" (Netflix, Spotify, Cloud)
 - "Pengeluaran Lainnya" (Jika tidak termasuk di atas)
 
+Jika transaction_type === "income":
+- "Gaji" (Gaji bulanan, upah tetap)
+- "Bonus" (Bonus kinerja, THR, komisi penjualan)
+- "Freelance" (Proyek sampingan, honorarium, jasa lepas)
+- "Investasi" (Dividen, imbal hasil reksadana, capital gain saham/kripto)
+- "Pemasukan Lainnya" (Transfer masuk umum, hadiah, cashback, pengembalian dana)
+
 Catatan Penting:
 1. Semua nilai nominal uang adalah bilangan bulat integer IDR (Rupiah).
 2. Jika tanggal di struk hanya tertulis hari dan bulan, gunakan tahun 2026.
-3. Pastikan grand_total mencerminkan total akhir yang dibayar pelanggan.
+3. Pastikan grand_total mencerminkan total akhir transaksi.
 4. Jika struk agak buram atau ada teks tak terbaca, lakukan estimasi terbaik dan berikan catatan di confidence_notes.
 `;
 

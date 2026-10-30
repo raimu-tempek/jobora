@@ -16,6 +16,7 @@ import {
   seedSampleApplications,
   type ImportApplicationInput,
 } from "@/lib/applications/actions";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 import styles from "./ImportModal.module.css";
 
 export interface ImportModalProps {
@@ -25,6 +26,7 @@ export interface ImportModalProps {
 }
 
 export function ImportModal({ isOpen, onClose, onSuccess }: ImportModalProps) {
+  useBodyScrollLock(isOpen);
   const [activeTab, setActiveTab] = useState<"seed" | "file">("seed");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

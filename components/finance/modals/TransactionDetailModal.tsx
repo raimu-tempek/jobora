@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { FinancialTransaction } from "@/types/finance";
 import { formatIDR, formatDateIndo } from "@/lib/finance/format";
 import { X, Receipt, Calendar, CreditCard, Building2, Tag, Edit3, Trash2 } from "lucide-react";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export function TransactionDetailModal({
   onEdit,
   onDelete,
 }: TransactionDetailModalProps) {
+  useBodyScrollLock(isOpen);
   // Close on Escape key
   useEffect(() => {
     if (!isOpen) return;

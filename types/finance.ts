@@ -14,6 +14,7 @@ export interface ReceiptItem {
 
 export interface ReceiptScanResult {
   merchant_name?: string;
+  transaction_type?: TransactionType; // "expense" | "income"
   transaction_date?: string; // YYYY-MM-DD
   transaction_time?: string; // HH:mm
   receipt_number?: string;

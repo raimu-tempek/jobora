@@ -6,6 +6,7 @@ import { X, ArrowRight, ArrowLeftRight } from "lucide-react";
 import { formatIDR } from "@/lib/finance/format";
 import { CurrencyInput } from "@/components/finance/CurrencyInput";
 import { Select } from "@/components/ui/select";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export function TransferModal({
   onSave,
   accounts,
 }: TransferModalProps) {
+  useBodyScrollLock(isOpen);
   const [fromAccountId, setFromAccountId] = useState(accounts[0]?.id || "");
   const [toAccountId, setToAccountId] = useState(accounts[1]?.id || "");
   const [amount, setAmount] = useState("");
@@ -81,11 +83,11 @@ export function TransferModal({
       aria-modal="true"
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-md shadow-xl border border-[#e2eaf0] overflow-hidden"
+        className="bg-white rounded-2xl w-full max-w-md shadow-xl border border-[#e2eaf0] overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#e6faf7] text-[#107c74] flex items-center justify-center">
               <ArrowLeftRight size={18} />
@@ -104,7 +106,7 @@ export function TransferModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           <p className="text-xs text-gray-500">
             Transfer dana internal antar rekening atau e-wallet. Tidak dihitung sebagai pemasukan atau pengeluaran.
           </p>

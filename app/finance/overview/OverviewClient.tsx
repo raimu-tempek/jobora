@@ -15,7 +15,6 @@ import { TransactionModal } from "@/components/finance/modals/TransactionModal";
 import { TransferModal } from "@/components/finance/modals/TransferModal";
 import { AccountModal } from "@/components/finance/modals/AccountModal";
 import { TransactionDetailModal } from "@/components/finance/modals/TransactionDetailModal";
-import { ReceiptScannerModal } from "@/components/finance/modals/ReceiptScannerModal";
 import {
   FinancialAccount,
   FinancialCategory,
@@ -68,7 +67,7 @@ export function OverviewClient({ userId, userName }: OverviewClientProps) {
 
   // Modals state
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
-  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+  const [txModalInitialTab, setTxModalInitialTab] = useState<"manual" | "scan">("manual");
   const [editingTx, setEditingTx] = useState<FinancialTransaction | null>(null);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
@@ -182,7 +181,11 @@ export function OverviewClient({ userId, userName }: OverviewClientProps) {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
-            onClick={() => setIsScannerModalOpen(true)}
+            onClick={() => {
+              setEditingTx(null);
+              setTxModalInitialTab("scan");
+              setIsTxModalOpen(true);
+            }}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full border border-[#107c74] text-[#107c74] bg-[#e6faf7]/40 hover:bg-[#e6faf7] transition shadow-2xs"
           >
             <Upload size={16} /> Unggah Struk
@@ -191,6 +194,7 @@ export function OverviewClient({ userId, userName }: OverviewClientProps) {
             type="button"
             onClick={() => {
               setEditingTx(null);
+              setTxModalInitialTab("manual");
               setIsTxModalOpen(true);
             }}
             className="inline-flex items-center gap-1.5 px-4.5 py-2 text-sm font-semibold rounded-full bg-[#107c74] text-white hover:bg-[#0d6861] transition shadow-xs"
@@ -343,37 +347,30 @@ export function OverviewClient({ userId, userName }: OverviewClientProps) {
           transactions={transactions}
           onOpenCreateModal={() => {
             setEditingTx(null);
+            setTxModalInitialTab("manual");
             setIsTxModalOpen(true);
           }}
-          onOpenScanModal={() => setIsScannerModalOpen(true)}
+          onOpenScanModal={() => {
+            setEditingTx(null);
+            setTxModalInitialTab("scan");
+            setIsTxModalOpen(true);
+          }}
           onSelectTransaction={(t) => setSelectedTxDetail(t)}
           onEditTransaction={(t) => {
             setEditingTx(t);
+            setTxModalInitialTab("manual");
             setIsTxModalOpen(true);
           }}
         />
       </div>
 
       {/* Modals */}
-      <ReceiptScannerModal
-        isOpen={isScannerModalOpen}
-        onClose={() => setIsScannerModalOpen(false)}
-        onSuccess={loadData}
-        userId={userId}
-        accounts={accounts}
-        categories={categories}
-      />
-
       <TransactionModal
         isOpen={isTxModalOpen}
+        initialTab={txModalInitialTab}
         onClose={() => {
           setIsTxModalOpen(false);
           setEditingTx(null);
-        }}
-        onSwitchToScanner={() => {
-          setIsTxModalOpen(false);
-          setEditingTx(null);
-          setIsScannerModalOpen(true);
         }}
         onSave={handleSaveTransaction}
         userId={userId}

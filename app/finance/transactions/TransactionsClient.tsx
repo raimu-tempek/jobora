@@ -5,7 +5,6 @@ import { AppShell } from "@/components/layout/AppShell";
 import { FinanceSubnav } from "@/components/finance/FinanceSubnav";
 import { TransactionModal } from "@/components/finance/modals/TransactionModal";
 import { TransactionDetailModal } from "@/components/finance/modals/TransactionDetailModal";
-import { ReceiptScannerModal } from "@/components/finance/modals/ReceiptScannerModal";
 import {
   FinancialAccount,
   FinancialCategory,
@@ -59,7 +58,7 @@ export function TransactionsClient({
 
   // Modals
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
-  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+  const [txModalInitialTab, setTxModalInitialTab] = useState<"manual" | "scan">("manual");
   const [editingTx, setEditingTx] = useState<FinancialTransaction | null>(null);
   const [selectedTxDetail, setSelectedTxDetail] =
     useState<FinancialTransaction | null>(null);
@@ -173,7 +172,11 @@ export function TransactionsClient({
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
-            onClick={() => setIsScannerModalOpen(true)}
+            onClick={() => {
+              setEditingTx(null);
+              setTxModalInitialTab("scan");
+              setIsTxModalOpen(true);
+            }}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full border border-[#107c74] text-[#107c74] bg-[#e6faf7]/40 hover:bg-[#e6faf7] transition shadow-2xs"
           >
             <Upload size={16} /> Unggah Struk
@@ -182,6 +185,7 @@ export function TransactionsClient({
             type="button"
             onClick={() => {
               setEditingTx(null);
+              setTxModalInitialTab("manual");
               setIsTxModalOpen(true);
             }}
             className="inline-flex items-center gap-1.5 px-4.5 py-2 text-sm font-semibold rounded-full bg-[#107c74] text-white hover:bg-[#0d6861] transition shadow-xs"
@@ -473,25 +477,12 @@ export function TransactionsClient({
       </div>
 
       {/* Modals */}
-      <ReceiptScannerModal
-        isOpen={isScannerModalOpen}
-        onClose={() => setIsScannerModalOpen(false)}
-        onSuccess={loadData}
-        userId={userId}
-        accounts={accounts}
-        categories={categories}
-      />
-
       <TransactionModal
         isOpen={isTxModalOpen}
+        initialTab={txModalInitialTab}
         onClose={() => {
           setIsTxModalOpen(false);
           setEditingTx(null);
-        }}
-        onSwitchToScanner={() => {
-          setIsTxModalOpen(false);
-          setEditingTx(null);
-          setIsScannerModalOpen(true);
         }}
         onSave={handleSaveTransaction}
         userId={userId}
@@ -506,6 +497,7 @@ export function TransactionsClient({
         transaction={selectedTxDetail}
         onEdit={(tx) => {
           setEditingTx(tx);
+          setTxModalInitialTab("manual");
           setIsTxModalOpen(true);
         }}
         onDelete={handleDeleteTransaction}

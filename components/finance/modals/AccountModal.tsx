@@ -5,6 +5,7 @@ import { FinancialAccount, AccountType } from "@/types/finance";
 import { X, Trash2 } from "lucide-react";
 import { CurrencyInput } from "@/components/finance/CurrencyInput";
 import { Select } from "@/components/ui/select";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export function AccountModal({
   onDelete,
   canDelete = false,
 }: AccountModalProps) {
+  useBodyScrollLock(isOpen);
   const isEditing = Boolean(initialData);
 
   const [name, setName] = useState("");
@@ -93,10 +95,10 @@ export function AccountModal({
       aria-modal="true"
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-md shadow-xl border border-[#e2eaf0] overflow-hidden"
+        className="bg-white rounded-2xl w-full max-w-md shadow-xl border border-[#e2eaf0] overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <h2 className="text-base font-bold text-gray-900 font-heading">
             {isEditing ? "Edit Akun Keuangan" : "Tambah Akun Keuangan"}
           </h2>
@@ -109,7 +111,7 @@ export function AccountModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
               Nama Akun / Rekening <span className="text-rose-500">*</span>

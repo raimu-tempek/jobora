@@ -2,7 +2,18 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Select } from "@/components/ui/select";
-import styles from "./AddApplicationModal.module.css";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
+import {
+  X,
+  Sparkles,
+  Upload,
+  CheckCircle2,
+  Trash2,
+  Edit3,
+  Calendar,
+  Lock,
+  ImageIcon,
+} from "lucide-react";
 
 export interface AddApplicationFormData {
   company: string;
@@ -44,6 +55,9 @@ export function AddApplicationModal({
 }: AddApplicationModalProps) {
   const [activeTab, setActiveTab] = useState<"manual" | "ai">(initialTab);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  useBodyScrollLock(isOpen);
+
   const [prevInitialData, setPrevInitialData] = useState(initialData);
   const [formData, setFormData] = useState<AddApplicationFormData>(DEFAULT_FORM_STATE);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -173,383 +187,417 @@ export function AddApplicationModal({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  // Reusable Form Fields (digunakan di tab manual dan tab AI)
+  const renderFormFields = () => (
+    <div className="space-y-4">
+      {/* 1 & 2. Nama Perusahaan & Posisi Pekerjaan (Grid 2 Kolom) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="company-name">
+            Nama Perusahaan <span className="text-rose-500">*</span>
+          </label>
+          <input
+            id="company-name"
+            type="text"
+            required
+            placeholder="cth. GoTo Financial"
+            className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:border-[#107c74]"
+            value={formData.company}
+            onChange={(e) => handleFieldChange("company", e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="position-name">
+            Posisi Pekerjaan <span className="text-rose-500">*</span>
+          </label>
+          <input
+            id="position-name"
+            type="text"
+            required
+            placeholder="cth. Product Designer"
+            className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:border-[#107c74]"
+            value={formData.position}
+            onChange={(e) => handleFieldChange("position", e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* 3 & 4. Tipe Pekerjaan & Status Awal (Grid 2 Kolom) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="job-type">
+            Tipe Pekerjaan <span className="text-rose-500">*</span>
+          </label>
+          <Select
+            id="job-type"
+            required
+            value={formData.jobType}
+            onChange={(val) => handleFieldChange("jobType", val)}
+            size="sm"
+            options={[
+              { value: "Full-time", label: "Full-time" },
+              { value: "Internship", label: "Internship" },
+              { value: "Contract", label: "Contract" },
+              { value: "Freelance", label: "Freelance" },
+            ]}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="initial-status">
+            Status Awal <span className="text-rose-500">*</span>
+          </label>
+          <Select
+            id="initial-status"
+            required
+            value={formData.initialStatus}
+            onChange={(val) => handleFieldChange("initialStatus", val)}
+            size="sm"
+            options={[
+              { value: "Submitted", label: "Submitted" },
+              { value: "Test", label: "Test" },
+              { value: "Task", label: "Task" },
+              { value: "Interview HR", label: "Interview HR" },
+              { value: "Interview User", label: "Interview User" },
+              { value: "LGD", label: "LGD" },
+              { value: "FGD", label: "FGD" },
+              { value: "Offering", label: "Offering Received" },
+              { value: "Rejected", label: "Rejected" },
+              { value: "Ghosted", label: "Ghosted" },
+              { value: "Withdrawn", label: "Withdrawn (Dibatalkan)" },
+            ]}
+          />
+        </div>
+      </div>
+
+      {/* 5 & 6. Tanggal Melamar & Platform Lamaran (Grid 2 Kolom) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="apply-date">
+            Tanggal Melamar <span className="text-rose-500">*</span>
+          </label>
+          <div className="relative">
+            <input
+              id="apply-date"
+              type="text"
+              required
+              placeholder="DD/MM/YYYY"
+              className="w-full pl-3 pr-9 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:border-[#107c74]"
+              value={formData.applyDate}
+              onChange={(e) => handleFieldChange("applyDate", e.target.value)}
+            />
+            <Calendar
+              size={15}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="platform-select">
+            Platform Lamaran <span className="text-rose-500">*</span>
+          </label>
+          <Select
+            id="platform-select"
+            required
+            value={formData.platform}
+            onChange={(val) => handleFieldChange("platform", val)}
+            size="sm"
+            options={[
+              { value: "LinkedIn", label: "LinkedIn" },
+              { value: "Kalibrr", label: "Kalibrr" },
+              { value: "JobStreet", label: "JobStreet" },
+              { value: "Glints", label: "Glints" },
+              { value: "Career Portal", label: "Career Portal" },
+              { value: "Lainnya (Others)", label: "Lainnya (Others)" },
+            ]}
+          />
+        </div>
+      </div>
+
+      {/* Field Tambahan jika Platform "Lainnya (Others)" */}
+      {formData.platform === "Lainnya (Others)" && (
+        <div className="p-3 bg-gray-50/70 border border-gray-200/80 rounded-xl space-y-1.5 animate-in fade-in duration-150">
+          <div className="flex items-center justify-between">
+            <label
+              className="block text-xs font-semibold text-gray-700"
+              htmlFor="custom-platform-input"
+            >
+              Nama Platform / Sumber <span className="text-rose-500">*</span>
+            </label>
+            <span className="text-[10px] font-semibold bg-[#e6faf7] text-[#107c74] px-1.5 py-0.5 rounded-full">
+              Sebutkan Manual
+            </span>
+          </div>
+          <input
+            id="custom-platform-input"
+            ref={customPlatformInputRef}
+            type="text"
+            required
+            placeholder="Contoh: Glints, Deall, Website Karir, Referensi Teman..."
+            className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:border-[#107c74] bg-white"
+            value={formData.customPlatform || ""}
+            onChange={(e) => handleFieldChange("customPlatform", e.target.value)}
+          />
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div
-      className={styles.backdrop}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
       onClick={handleClose}
     >
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <header className={styles.header}>
-          <div className={styles.headerContent}>
-            <div className={styles.titleRow}>
-              <h2 id="modal-title" className={styles.title}>
-                {mode === "edit" ? "Edit Lamaran" : "Tambah Lamaran Baru"}
-              </h2>
-              {mode !== "edit" && (
-                <span className={styles.aiBadge}>
-                  <span
-                    className={`material-symbols-outlined ${styles.aiBadgeIcon}`}
-                    aria-hidden="true"
-                  >
-                    auto_awesome
-                  </span>
-                  AI Ready
-                </span>
+      <div
+        className={`bg-white rounded-2xl w-full ${
+          activeTab === "ai" && mode !== "edit" ? "max-w-4xl" : "max-w-xl"
+        } shadow-xl border border-[#e2eaf0] overflow-hidden flex flex-col max-h-[90vh] transition-[max-width] duration-300 ease-out`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white sticky top-0 z-10 shrink-0">
+          <div>
+            <h2 id="modal-title" className="text-base font-bold text-gray-900 font-heading flex items-center gap-2">
+              {activeTab === "ai" && mode !== "edit" ? (
+                <>
+                  <Sparkles size={18} className="text-[#107c74]" />
+                  <span>Upload Screenshot Lamaran</span>
+                </>
+              ) : mode === "edit" ? (
+                <span>Edit Lamaran</span>
+              ) : (
+                <span>Tambah Lamaran Baru</span>
               )}
-            </div>
-            <p className={styles.subtitle}>
-              {mode === "edit"
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {activeTab === "ai" && mode !== "edit"
+                ? "Ekstrak otomatis detail posisi dan perusahaan dari screenshot postingan kerja."
+                : mode === "edit"
                 ? "Perbarui detail posisi, perusahaan, status tahapan, atau platform lamaran pekerjaan."
-                : "Catat lamaran secara manual atau gunakan AI untuk ekstrak otomatis dari screenshot."}
+                : "Catat lamaran pekerjaan secara manual atau unggah screenshot via AI."}
             </p>
           </div>
           <button
             type="button"
-            className={styles.closeButton}
+            className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg transition"
             onClick={handleClose}
             aria-label="Tutup modal"
+            title="Tutup"
           >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              close
-            </span>
+            <X size={18} />
           </button>
-        </header>
+        </div>
 
-        {/* Content Body */}
-        <div className={styles.body}>
+        {/* Modal Content Scroll Area */}
+        <div className="p-6 overflow-y-auto min-h-[420px]">
           {/* Segmented Tab Control (hanya saat mode tambah baru) */}
           {mode !== "edit" && (
-            <div className={styles.tabs} role="tablist">
+            <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl mb-5" role="tablist">
               <button
                 type="button"
                 role="tab"
                 aria-selected={activeTab === "manual"}
-                className={`${styles.tab} ${
-                  activeTab === "manual" ? styles.tabActive : styles.tabInactive
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition ${
+                  activeTab === "manual"
+                    ? "bg-white text-gray-900 shadow-xs"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
                 onClick={() => handleTabChange("manual")}
               >
-                <span
-                  className={`material-symbols-outlined ${styles.tabIcon}`}
-                  aria-hidden="true"
-                >
-                  edit_note
-                </span>
-                Input Manual
+                <Edit3
+                  size={14}
+                  className={activeTab === "manual" ? "text-[#107c74]" : "text-gray-400"}
+                />
+                <span>Input Manual</span>
               </button>
               <button
                 type="button"
                 role="tab"
                 aria-selected={activeTab === "ai"}
-                className={`${styles.tab} ${
-                  activeTab === "ai" ? styles.tabActive : styles.tabInactive
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition ${
+                  activeTab === "ai"
+                    ? "bg-white text-gray-900 shadow-xs"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
                 onClick={() => handleTabChange("ai")}
               >
-                <span
-                  className={`material-symbols-outlined ${styles.tabIcon} ${styles.tabIconAi}`}
-                  aria-hidden="true"
-                >
-                  auto_awesome
+                <Sparkles
+                  size={14}
+                  className={activeTab === "ai" ? "text-[#107c74]" : "text-gray-400"}
+                />
+                <span>Upload Screenshot (AI)</span>
+                <span className="text-[10px] font-semibold bg-[#e6faf7] text-[#107c74] px-1.5 py-0.5 rounded-full ml-0.5">
+                  Beta
                 </span>
-                Upload Screenshot (AI)
-                <span className={styles.betaPill}>Beta</span>
               </button>
             </div>
           )}
 
-          {/* Upload Screenshot (AI) Tab */}
-          {activeTab === "ai" && (
-            <div className={styles.aiPanel}>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                style={{ display: "none" }}
-                onChange={handleFileSelect}
-              />
+          {/* TAB 1: INPUT MANUAL (atau mode edit) */}
+          {(activeTab === "manual" || mode === "edit") && (
+            <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in duration-200">
+              {renderFormFields()}
 
-              {uploadedFile ? (
-                /* File Preview Card */
-                <div className={styles.filePreviewCard}>
-                  <div className={styles.filePreviewInfo}>
-                    <div className={styles.fileIconBox}>
-                      <span
-                        className={`material-symbols-outlined ${styles.fileIcon}`}
-                        aria-hidden="true"
-                      >
-                        image
-                      </span>
-                    </div>
-                    <div className={styles.fileMeta}>
-                      <span className={styles.fileName}>
-                        {uploadedFile.name}
-                      </span>
-                      <span className={styles.fileCaption}>
-                        <span
-                          className={`material-symbols-outlined ${styles.checkCircleIcon}`}
-                          aria-hidden="true"
-                        >
-                          check_circle
-                        </span>
-                        {formatFileSize(uploadedFile.size)} • Siap diekstrak via Gemini AI
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.fileActions}>
-                    <button
-                      type="button"
-                      className={styles.changeImageButton}
+              {/* Footer Actions */}
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-full transition"
+                  onClick={handleClose}
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-sm font-semibold text-white bg-[#107c74] hover:bg-[#0d6861] rounded-full transition shadow-xs flex items-center gap-1.5"
+                >
+                  <CheckCircle2 size={16} />
+                  {mode === "edit" ? "Simpan Perubahan" : "Simpan Lamaran"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* TAB 2: UPLOAD SCREENSHOT (AI) - 2-COLUMN LAYOUT IDENTIK DENGAN TRANSAKSI */}
+          {activeTab === "ai" && mode !== "edit" && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-in fade-in duration-200">
+              {/* Left Column: Dropzone & File Preview */}
+              <div className="lg:col-span-5 space-y-3">
+                <div className="bg-gray-50/70 border border-[#e2eaf0] rounded-2xl p-4">
+                  <span className="text-xs font-bold text-gray-900 font-heading mb-2 flex items-center gap-1.5 block">
+                    <Upload size={15} className="text-[#107c74]" />
+                    Foto Screenshot
+                  </span>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+
+                  {/* Dropzone */}
+                  {!uploadedFile ? (
+                    <div
                       onClick={() => fileInputRef.current?.click()}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleDrop}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          fileInputRef.current?.click();
+                        }
+                      }}
+                      className="border-2 border-dashed border-gray-200 hover:border-[#107c74] rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition bg-white hover:bg-[#e6faf7]/20 min-h-[160px]"
                     >
-                      Ganti Gambar
-                    </button>
+                      <ImageIcon size={34} className="text-[#107c74] mb-2" />
+                      <p className="font-semibold text-xs text-gray-800">
+                        Pilih atau Geser Screenshot
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        PNG, JPG, atau WEBP (maks. 5MB)
+                      </p>
+                    </div>
+                  ) : (
+                    /* Preview Card */
+                    <div className="space-y-2">
+                      <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-900/5 max-h-48 flex items-center justify-center">
+                        {filePreviewUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={filePreviewUrl}
+                            alt="Preview Screenshot"
+                            className="max-h-48 object-contain rounded-lg"
+                          />
+                        ) : (
+                          <div className="py-8 flex flex-col items-center justify-center text-gray-400">
+                            <ImageIcon size={32} />
+                            <span className="text-xs mt-1">Preview tidak tersedia</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* File Metadata */}
+                      <div className="p-2.5 rounded-xl bg-white border border-gray-200 flex items-center justify-between text-xs">
+                        <div className="truncate mr-2">
+                          <p className="font-medium text-gray-800 truncate">{uploadedFile.name}</p>
+                          <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
+                            <CheckCircle2 size={12} className="text-emerald-500" />
+                            {formatFileSize(uploadedFile.size)} • Siap diekstrak via Gemini AI
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={resetAiUploadState}
+                          className="p-1.5 text-gray-400 hover:text-rose-600 rounded-lg hover:bg-gray-100 transition shrink-0"
+                          title="Hapus foto"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 transition"
+                      >
+                        Ganti Gambar
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Privacy Banner */}
+                  <div className="mt-3 p-2.5 rounded-xl bg-teal-50/60 border border-[#107c74]/20 text-[#107c74] text-xs flex items-start gap-2">
+                    <Lock size={14} className="shrink-0 mt-0.5" />
+                    <p className="text-[11px] leading-relaxed">
+                      Gambar tidak disimpan ke server database, hanya diproses sekali oleh AI lalu dibuang.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Form Inputs */}
+              <div className="lg:col-span-7">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {uploadedFile && (
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 animate-in fade-in duration-150">
+                      <CheckCircle2 size={15} className="shrink-0 text-emerald-600" />
+                      <span>
+                        Screenshot terpilih. Periksa atau lengkapi data lamaran di bawah ini sebelum menyimpan.
+                      </span>
+                    </div>
+                  )}
+
+                  {renderFormFields()}
+
+                  {/* Footer Actions */}
+                  <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-100">
                     <button
                       type="button"
-                      className={styles.removeFileButton}
-                      onClick={resetAiUploadState}
-                      title="Hapus file"
+                      className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-full transition"
+                      onClick={handleClose}
                     >
-                      Hapus
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 text-sm font-semibold text-white bg-[#107c74] hover:bg-[#0d6861] rounded-full transition shadow-xs flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 size={16} /> Simpan Lamaran
                     </button>
                   </div>
-                </div>
-              ) : (
-                /* Empty Placeholder State ("Pilih File") */
-                <div
-                  className={styles.dropzone}
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={handleDrop}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      fileInputRef.current?.click();
-                    }
-                  }}
-                >
-                  <div className={styles.dropzoneIconBox}>
-                    <span
-                      className={`material-symbols-outlined ${styles.dropzoneIcon}`}
-                      aria-hidden="true"
-                    >
-                      add_photo_alternate
-                    </span>
-                  </div>
-                  <p className={styles.dropzoneText}>
-                    Pilih atau Tarik File Screenshot ke Sini
-                  </p>
-                  <p className={styles.dropzoneHint}>
-                    PNG, JPG, atau WEBP (maks. 5MB) • Ekstraksi otomatis via AI
-                  </p>
-                </div>
-              )}
-
-              {/* Privacy Banner */}
-              <div className={styles.privacyBanner}>
-                <span
-                  className={`material-symbols-outlined ${styles.lockIcon}`}
-                  aria-hidden="true"
-                >
-                  lock
-                </span>
-                <p className={styles.privacyText}>
-                  Gambar tidak disimpan ke server, hanya diproses sekali oleh AI lalu dibuang.
-                </p>
+                </form>
               </div>
             </div>
           )}
-
-          {/* Form */}
-          <form id="add-application-form" onSubmit={handleSubmit} className={styles.form}>
-            <div className={styles.grid}>
-              {/* Nama Perusahaan */}
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="company-name">
-                  Nama Perusahaan <span className={styles.required}>*</span>
-                </label>
-                <input
-                  id="company-name"
-                  type="text"
-                  required
-                  placeholder="cth. GoTo Financial"
-                  className={styles.input}
-                  value={formData.company}
-                  onChange={(e) => handleFieldChange("company", e.target.value)}
-                />
-              </div>
-
-              {/* Posisi Pekerjaan */}
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="position-name">
-                  Posisi Pekerjaan <span className={styles.required}>*</span>
-                </label>
-                <input
-                  id="position-name"
-                  type="text"
-                  required
-                  placeholder="cth. Product Designer"
-                  className={styles.input}
-                  value={formData.position}
-                  onChange={(e) => handleFieldChange("position", e.target.value)}
-                />
-              </div>
-
-              {/* Tipe Pekerjaan */}
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="job-type">
-                  Tipe Pekerjaan <span className={styles.required}>*</span>
-                </label>
-                <Select
-                  id="job-type"
-                  required
-                  value={formData.jobType}
-                  onChange={(val) => handleFieldChange("jobType", val)}
-                  size="sm"
-                  options={[
-                    { value: "Full-time", label: "Full-time" },
-                    { value: "Internship", label: "Internship" },
-                    { value: "Contract", label: "Contract" },
-                    { value: "Freelance", label: "Freelance" },
-                  ]}
-                />
-              </div>
-
-              {/* Status Awal */}
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="initial-status">
-                  Status Awal <span className={styles.required}>*</span>
-                </label>
-                <Select
-                  id="initial-status"
-                  required
-                  value={formData.initialStatus}
-                  onChange={(val) => handleFieldChange("initialStatus", val)}
-                  size="sm"
-                  options={[
-                    { value: "Submitted", label: "Submitted" },
-                    { value: "Test", label: "Test" },
-                    { value: "Task", label: "Task" },
-                    { value: "Interview HR", label: "Interview HR" },
-                    { value: "Interview User", label: "Interview User" },
-                    { value: "LGD", label: "LGD" },
-                    { value: "FGD", label: "FGD" },
-                    { value: "Offering", label: "Offering Received" },
-                    { value: "Rejected", label: "Rejected" },
-                    { value: "Ghosted", label: "Ghosted" },
-                    { value: "Withdrawn", label: "Withdrawn (Dibatalkan)" },
-                  ]}
-                />
-              </div>
-
-              {/* Tanggal Melamar */}
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="apply-date">
-                  Tanggal Melamar <span className={styles.required}>*</span>
-                </label>
-                <div className={styles.inputWithIconWrapper}>
-                  <input
-                    id="apply-date"
-                    type="text"
-                    required
-                    placeholder="DD/MM/YYYY"
-                    className={`${styles.input} ${styles.inputWithIcon}`}
-                    value={formData.applyDate}
-                    onChange={(e) => handleFieldChange("applyDate", e.target.value)}
-                  />
-                  <span
-                    className={`material-symbols-outlined ${styles.inputIcon}`}
-                    aria-hidden="true"
-                  >
-                    calendar_today
-                  </span>
-                </div>
-              </div>
-
-              {/* Platform Lamaran */}
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="platform-select">
-                  Platform Lamaran <span className={styles.required}>*</span>
-                </label>
-                <Select
-                  id="platform-select"
-                  required
-                  value={formData.platform}
-                  onChange={(val) => handleFieldChange("platform", val)}
-                  size="sm"
-                  options={[
-                    { value: "LinkedIn", label: "LinkedIn" },
-                    { value: "Kalibrr", label: "Kalibrr" },
-                    { value: "JobStreet", label: "JobStreet" },
-                    { value: "Glints", label: "Glints" },
-                    { value: "Career Portal", label: "Career Portal" },
-                    { value: "Lainnya (Others)", label: "Lainnya (Others)" },
-                  ]}
-                />
-              </div>
-
-              {/* Extra field when "Lainnya (Others)" is selected */}
-              {formData.platform === "Lainnya (Others)" && (
-                <div className={styles.customPlatformCard}>
-                  <div className={styles.customPlatformHeader}>
-                    <label
-                      className={`${styles.label} ${styles.customPlatformLabel}`}
-                      htmlFor="custom-platform-input"
-                    >
-                      <span
-                        className={`material-symbols-outlined ${styles.customPlatformIcon}`}
-                        aria-hidden="true"
-                      >
-                        edit_note
-                      </span>
-                      Nama Platform / Sumber <span className={styles.required}>*</span>
-                    </label>
-                    <span className={styles.mentionManualBadge}>Sebutkan Manual</span>
-                  </div>
-                  <input
-                    id="custom-platform-input"
-                    ref={customPlatformInputRef}
-                    type="text"
-                    required
-                    placeholder="Contoh: Glints, Deall, Website Karir, Referensi Teman..."
-                    className={styles.input}
-                    value={formData.customPlatform || ""}
-                    onChange={(e) => handleFieldChange("customPlatform", e.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-          </form>
         </div>
-
-        {/* Footer */}
-        <footer className={styles.footer}>
-          <button
-            type="button"
-            className={styles.cancelButton}
-            onClick={handleClose}
-          >
-            Batal
-          </button>
-          <button
-            type="submit"
-            form="add-application-form"
-            className={styles.submitButton}
-          >
-            <span
-              className={`material-symbols-outlined ${styles.submitButtonIcon}`}
-              aria-hidden="true"
-            >
-              check
-            </span>
-            {mode === "edit" ? "Simpan Perubahan" : "Simpan Lamaran"}
-          </button>
-        </footer>
       </div>
     </div>
   );
