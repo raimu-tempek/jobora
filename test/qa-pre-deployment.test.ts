@@ -100,6 +100,91 @@ assert(emptyTitle.length === 0, "Correctly identifies empty whitespace title");
 const parsedGarbage = Number("abc") || 0;
 assert(parsedGarbage === 0, "Safely falls back to 0 on non-numeric input");
 
+// TEST SUITE 5: KANBAN & RECRUITMENT CALENDAR LOGIC
+console.log("\n--- 5. Kanban & Recruitment Calendar Logic ---");
+import { validateEventTimes, getNearestEventForApplication } from "../lib/applications/recruitment-service";
+import { formatStatus } from "../lib/applications/format";
+import { RecruitmentEvent } from "../types/recruitment";
+
+// Status formatting & mapping
+assert(formatStatus("Test") === "Technical Test", "Status 'Test' formats to 'Technical Test'");
+assert(formatStatus("Task") === "Take Home Task", "Status 'Task' formats to 'Take Home Task'");
+assert(formatStatus("Offering") === "Offering Received", "Status 'Offering' formats to 'Offering Received'");
+assert(formatStatus("Submitted") === "Submitted", "Status 'Submitted' retains standard label");
+assert(formatStatus("Interview HR") === "Interview HR", "Status 'Interview HR' retains standard label");
+
+// Event Time Validations
+const valValidSingle = validateEventTimes("2026-10-31T09:00:00");
+assert(valValidSingle.valid, "Accepts valid start time without end time");
+
+const valValidRange = validateEventTimes("2026-10-31T09:00:00", "2026-10-31T10:00:00");
+assert(valValidRange.valid, "Accepts end time after start time");
+
+const valEqualTime = validateEventTimes("2026-10-31T09:00:00", "2026-10-31T09:00:00");
+assert(valEqualTime.valid, "Accepts equal start and end time");
+
+const valInvalidMissingStart = validateEventTimes("");
+assert(!valInvalidMissingStart.valid, "Rejects empty start time");
+
+const valInvalidPrecedingEnd = validateEventTimes("2026-10-31T10:00:00", "2026-10-31T09:00:00");
+assert(!valInvalidPrecedingEnd.valid, "Rejects end time earlier than start time");
+
+// Nearest Event Detection
+const mockEvents: RecruitmentEvent[] = [
+  {
+    id: "ev1",
+    user_id: "u1",
+    application_id: "app-1",
+    title: "Interview HR",
+    event_type: "HR Interview",
+    start_time: new Date(Date.now() + 86400000).toISOString(), // tomorrow
+    end_time: null,
+    is_all_day: false,
+    location: "Google Meet",
+    notes: null,
+    is_completed: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "ev2",
+    user_id: "u1",
+    application_id: "app-1",
+    title: "Interview User",
+    event_type: "User Interview",
+    start_time: new Date(Date.now() + 172800000).toISOString(), // in 2 days
+    end_time: null,
+    is_all_day: false,
+    location: null,
+    notes: null,
+    is_completed: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "ev3",
+    user_id: "u1",
+    application_id: "app-1",
+    title: "Completed Assessment",
+    event_type: "Assessment Deadline",
+    start_time: new Date(Date.now() + 3600000).toISOString(),
+    end_time: null,
+    is_all_day: false,
+    location: null,
+    notes: null,
+    is_completed: true, // completed!
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+const nearest = getNearestEventForApplication(mockEvents, "app-1");
+assert(Boolean(nearest), "Finds nearest event for application");
+assert(nearest?.id === "ev1", "Selects the closest non-completed upcoming event", nearest?.id);
+
+const nearestEmpty = getNearestEventForApplication(mockEvents, "app-non-existent");
+assert(nearestEmpty === null, "Returns null when no event exists for application");
+
 console.log("\n=================================================");
 console.log(`QA SUMMARY: ${passedTests}/${totalTests} Tests Passed (${failedTests} Failed)`);
 console.log("=================================================");

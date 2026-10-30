@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout";
 import {
   AddApplicationModal,
@@ -10,10 +10,14 @@ import {
   ImportModal,
   Pagination,
   TableToolbar,
+  KanbanBoard,
+  RecruitmentCalendar,
+  ApplicationDetailModal,
   type ApplicationItem,
   type AddApplicationFormData,
 } from "@/components/applications";
 import { Application } from "@/types/application";
+import { RecruitmentEvent } from "@/types/recruitment";
 import {
   isInterviewGroup,
   isTestTaskGroup,
@@ -25,7 +29,16 @@ import {
   createApplication,
   updateApplication,
   deleteApplication,
+  updateApplicationStatus,
 } from "@/lib/applications/actions";
+import {
+  fetchRecruitmentEvents,
+  saveRecruitmentEvent,
+  deleteRecruitmentEvent,
+  toggleEventCompletion,
+  recordStatusChange,
+} from "@/lib/applications/recruitment-service";
+import { createClient } from "@/lib/supabase/client";
 import styles from "./applications.module.css";
 
 const PAGE_SIZE = 10;
@@ -49,16 +62,59 @@ export function ApplicationsView({
   applications,
 }: ApplicationsViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Active view: "table" | "kanban" | "calendar"
+  const initialView = (searchParams?.get("view") as "table" | "kanban" | "calendar") || "table";
+  const [view, setView] = useState<"table" | "kanban" | "calendar">(
+    ["table", "kanban", "calendar"].includes(initialView) ? initialView : "table"
+  );
+
   const [prevApplications, setPrevApplications] = useState(applications);
   const [localApplications, setLocalApplications] = useState<Application[]>(applications);
   const [editingApplication, setEditingApplication] = useState<Application | null>(null);
+  const [detailApplication, setDetailApplication] = useState<Application | null>(null);
 
-  // Sync state during render when server applications prop changes (React recommended pattern)
+  // Sync state during render when server applications prop changes
   if (applications !== prevApplications) {
     setPrevApplications(applications);
     setLocalApplications(applications);
   }
 
+  // Resolve user id
+  const [userId, setUserId] = useState<string>(applications[0]?.user_id || "");
+
+  useEffect(() => {
+    if (!userId) {
+      const supabase = createClient();
+      supabase.auth.getUser().then(({ data }) => {
+        if (data?.user?.id) {
+          setUserId(data.user.id);
+        }
+      });
+    }
+  }, [userId]);
+
+  // Recruitment Events
+  const [events, setEvents] = useState<RecruitmentEvent[]>([]);
+
+  const loadEvents = useCallback(async (uid: string) => {
+    if (!uid) return;
+    try {
+      const list = await fetchRecruitmentEvents(uid);
+      setEvents(list);
+    } catch (err) {
+      console.warn("Failed loading recruitment events:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      loadEvents(userId);
+    }
+  }, [userId, loadEvents]);
+
+  // Filters and sorting
   const [activeFilter, setActiveFilter] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Semua Status");
@@ -66,7 +122,7 @@ export function ApplicationsView({
   const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Modal state
+  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<"manual" | "ai">("manual");
@@ -80,6 +136,11 @@ export function ApplicationsView({
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingApplication(null);
+  };
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   // Compute status pill counts using shared group helpers over localApplications
@@ -172,7 +233,7 @@ export function ApplicationsView({
     return result;
   }, [localApplications, activeFilter, statusFilter, searchQuery, sortBy]);
 
-  // Paginated items
+  // Paginated items for Table View
   const totalItems = filteredAndSortedApplications.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
   const paginatedApplications = useMemo(() => {
@@ -244,8 +305,7 @@ export function ApplicationsView({
       const res = await updateApplication(editingApplication.id, data);
       if (res.success) {
         closeModal();
-        setToastMessage("Lamaran berhasil diperbarui!");
-        setTimeout(() => setToastMessage(null), 3000);
+        showToast("Lamaran berhasil diperbarui!");
         router.refresh();
       } else {
         alert(res.error || "Gagal memperbarui lamaran.");
@@ -255,8 +315,7 @@ export function ApplicationsView({
       const res = await createApplication(data);
       if (res.success) {
         closeModal();
-        setToastMessage("Lamaran berhasil disimpan!");
-        setTimeout(() => setToastMessage(null), 3000);
+        showToast("Lamaran berhasil disimpan!");
         router.refresh();
       } else {
         alert(res.error || "Gagal menyimpan lamaran.");
@@ -264,28 +323,103 @@ export function ApplicationsView({
     }
   };
 
-  const handleDelete = async (item: ApplicationItem) => {
-    if (!item.id) return;
+  const handleDelete = async (target: { id?: string; company: string; position: string }) => {
+    if (!target.id) return;
     const confirmed = window.confirm(
-      `Apakah Anda yakin ingin menghapus lamaran "${item.position} di ${item.company}"?\n\nTindakan ini permanen dan tidak dapat dibatalkan.`
+      `Apakah Anda yakin ingin menghapus lamaran "${target.position} di ${target.company}"?\n\nTindakan ini permanen dan tidak dapat dibatalkan.`
     );
     if (!confirmed) return;
 
     const previousApps = localApplications;
-    // Optimistic removal
-    setLocalApplications((prev) => prev.filter((app) => app.id !== item.id));
-    setToastMessage("Menghapus lamaran...");
+    setLocalApplications((prev) => prev.filter((app) => app.id !== target.id));
+    showToast("Menghapus lamaran...");
 
-    const res = await deleteApplication(item.id);
+    const res = await deleteApplication(target.id);
     if (res.success) {
-      setToastMessage("Lamaran berhasil dihapus!");
-      setTimeout(() => setToastMessage(null), 3000);
+      showToast("Lamaran berhasil dihapus!");
       router.refresh();
     } else {
       setLocalApplications(previousApps);
       alert(res.error || "Gagal menghapus lamaran.");
       setToastMessage(null);
     }
+  };
+
+  // Kanban Status Change Handler (Drag-and-Drop & Accessible Move)
+  const handleKanbanStatusChange = async (appId: string, newStatus: string): Promise<boolean> => {
+    const targetApp = localApplications.find((a) => a.id === appId);
+    if (!targetApp) return false;
+
+    const previousStatus = targetApp.status;
+    if (previousStatus === newStatus) return true;
+
+    // Optimistic UI update
+    setLocalApplications((prev) =>
+      prev.map((a) =>
+        a.id === appId
+          ? { ...a, status: newStatus, updated_at: new Date().toISOString() }
+          : a
+      )
+    );
+
+    // Call server action
+    const res = await updateApplicationStatus(appId, newStatus);
+    if (res.success) {
+      // Record history
+      if (userId) {
+        recordStatusChange(userId, appId, previousStatus, newStatus);
+      }
+      showToast(`Status ${targetApp.company} diubah ke ${newStatus}`);
+      router.refresh();
+      return true;
+    } else {
+      // Revert optimistic update
+      setLocalApplications((prev) =>
+        prev.map((a) => (a.id === appId ? { ...a, status: previousStatus } : a))
+      );
+      alert(res.error || "Gagal mengubah status lamaran.");
+      return false;
+    }
+  };
+
+  // Recruitment Event CRUD handlers
+  const handleSaveEvent = async (eventData: Parameters<typeof saveRecruitmentEvent>[1]) => {
+    if (!userId) {
+      return { success: false, error: "Sesi pengguna tidak tersedia." };
+    }
+    const res = await saveRecruitmentEvent(userId, eventData);
+    if (res.success && res.event) {
+      await loadEvents(userId);
+      showToast("Jadwal agenda berhasil disimpan!");
+      return { success: true };
+    }
+    return { success: false, error: res.error || "Gagal menyimpan agenda." };
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!userId) return false;
+    const res = await deleteRecruitmentEvent(userId, eventId);
+    if (res.success) {
+      await loadEvents(userId);
+      showToast("Jadwal agenda berhasil dihapus!");
+      return true;
+    }
+    return false;
+  };
+
+  const handleToggleComplete = async (eventId: string) => {
+    if (!userId) return false;
+    const res = await toggleEventCompletion(userId, eventId);
+    if (res.success) {
+      await loadEvents(userId);
+      showToast(
+        res.is_completed
+          ? "Jadwal ditandai selesai! 🎉"
+          : "Jadwal dibuka kembali."
+      );
+      return true;
+    }
+    return false;
   };
 
   return (
@@ -349,62 +483,193 @@ export function ApplicationsView({
           </div>
         </header>
 
-        {/* 2. Filter Pills */}
-        <section aria-label="Status filters">
-          <FilterPills
-            items={filterPillItems}
-            active={activeFilter}
-            onChange={(filter) => {
-              setActiveFilter(filter);
-              setCurrentPage(1);
-            }}
-          />
-        </section>
+        {/* 2. View Switcher & Quick Navigation */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 pb-1">
+          <div className={styles.viewSwitcher} role="tablist" aria-label="Pilihan tampilan lamaran">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === "table"}
+              className={`${styles.viewSwitchBtn} ${
+                view === "table" ? styles.viewSwitchBtnActive : ""
+              }`}
+              onClick={() => setView("table")}
+            >
+              <span className={`material-symbols-outlined ${styles.viewSwitchIcon}`} aria-hidden="true">
+                table_chart
+              </span>
+              <span>Tabel</span>
+              <span className="text-[10px] opacity-75 font-bold">({localApplications.length})</span>
+            </button>
 
-        {/* 3. Table Toolbar */}
-        <section aria-label="Tabel controls">
-          <TableToolbar
-            search={searchQuery}
-            onSearchChange={(q) => {
-              setSearchQuery(q);
-              setCurrentPage(1);
-            }}
-            statusFilter={statusFilter}
-            onStatusFilterChange={(s) => {
-              setStatusFilter(s);
-              setCurrentPage(1);
-            }}
-            sortBy={sortBy}
-            onSortByChange={setSortBy}
-            onExport={() => {
-              // Placeholder for export logic per PRD out of scope
-            }}
-          />
-        </section>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === "kanban"}
+              className={`${styles.viewSwitchBtn} ${
+                view === "kanban" ? styles.viewSwitchBtnActive : ""
+              }`}
+              onClick={() => setView("kanban")}
+            >
+              <span className={`material-symbols-outlined ${styles.viewSwitchIcon}`} aria-hidden="true">
+                view_kanban
+              </span>
+              <span>Kanban</span>
+            </button>
 
-        {/* 4. Applications Table & Pagination Container */}
-        <section className={styles.tableCard} aria-label="Daftar lamaran kerja">
-          <ApplicationsTable
-            applications={tableRows}
-            onEdit={(item) => {
-              const target = localApplications.find((a) => a.id === item.id);
-              if (target) {
-                setEditingApplication(target);
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === "calendar"}
+              className={`${styles.viewSwitchBtn} ${
+                view === "calendar" ? styles.viewSwitchBtnActive : ""
+              }`}
+              onClick={() => setView("calendar")}
+            >
+              <span className={`material-symbols-outlined ${styles.viewSwitchIcon}`} aria-hidden="true">
+                calendar_month
+              </span>
+              <span>Kalender Rekrutmen</span>
+              {events.length > 0 && (
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-teal-100 text-teal-800">
+                  {events.filter((e) => !e.is_completed).length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Quick search input when in Kanban mode */}
+          {view === "kanban" && (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Cari perusahaan di board..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 3. Conditional Content Based on View */}
+        {view === "table" && (
+          <>
+            {/* Filter Pills */}
+            <section aria-label="Status filters">
+              <FilterPills
+                items={filterPillItems}
+                active={activeFilter}
+                onChange={(filter) => {
+                  setActiveFilter(filter);
+                  setCurrentPage(1);
+                }}
+              />
+            </section>
+
+            {/* Table Toolbar */}
+            <section aria-label="Tabel controls">
+              <TableToolbar
+                search={searchQuery}
+                onSearchChange={(q) => {
+                  setSearchQuery(q);
+                  setCurrentPage(1);
+                }}
+                statusFilter={statusFilter}
+                onStatusFilterChange={(s) => {
+                  setStatusFilter(s);
+                  setCurrentPage(1);
+                }}
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                onExport={() => {
+                  // Export placeholder
+                }}
+              />
+            </section>
+
+            {/* Applications Table & Pagination Container */}
+            <section className={styles.tableCard} aria-label="Daftar lamaran kerja">
+              <ApplicationsTable
+                applications={tableRows}
+                onViewDetail={(item) => {
+                  const target = localApplications.find((a) => a.id === item.id);
+                  if (target) {
+                    setDetailApplication(target);
+                  }
+                }}
+                onEdit={(item) => {
+                  const target = localApplications.find((a) => a.id === item.id);
+                  if (target) {
+                    setEditingApplication(target);
+                    setIsModalOpen(true);
+                  }
+                }}
+                onDelete={(item) => handleDelete(item)}
+              />
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
+            </section>
+          </>
+        )}
+
+        {view === "kanban" && (
+          <section aria-label="Kanban board lamaran kerja">
+            <KanbanBoard
+              applications={filteredAndSortedApplications}
+              events={events}
+              onStatusChange={handleKanbanStatusChange}
+              onViewDetail={(app) => setDetailApplication(app)}
+              onEdit={(app) => {
+                setEditingApplication(app);
                 setIsModalOpen(true);
-              }
-            }}
-            onDelete={handleDelete}
-          />
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            pageSize={PAGE_SIZE}
-            onPageChange={setCurrentPage}
-          />
-        </section>
+              }}
+              onDelete={(app) => handleDelete(app)}
+            />
+          </section>
+        )}
 
-        {/* Feature banner "Sinkronisasi Otomatis Lewat Screenshot Email" intentionally excluded per docs/AGENTS.md boundaries. */}
+        {view === "calendar" && (
+          <section aria-label="Kalender rekrutmen">
+            <RecruitmentCalendar
+              events={events}
+              applications={localApplications}
+              onSaveEvent={handleSaveEvent}
+              onDeleteEvent={handleDeleteEvent}
+              onToggleComplete={handleToggleComplete}
+              onOpenApplicationDetail={(app) => setDetailApplication(app)}
+            />
+          </section>
+        )}
+
+        {/* Application Detail Modal (View Status History & Linked Events) */}
+        {detailApplication && (
+          <ApplicationDetailModal
+            isOpen={Boolean(detailApplication)}
+            application={detailApplication}
+            events={events}
+            userId={userId}
+            onClose={() => setDetailApplication(null)}
+            onEdit={(app) => {
+              setDetailApplication(null);
+              setEditingApplication(app);
+              setIsModalOpen(true);
+            }}
+            onDelete={(app) => {
+              setDetailApplication(null);
+              handleDelete(app);
+            }}
+            onAddEventForApp={() => {
+              setDetailApplication(null);
+              setView("calendar");
+            }}
+          />
+        )}
 
         {/* Shared Add / Edit Application Modal */}
         {isModalOpen && (
@@ -423,12 +688,11 @@ export function ApplicationsView({
           isOpen={isImportModalOpen}
           onClose={() => setIsImportModalOpen(false)}
           onSuccess={(msg) => {
-            setToastMessage(msg);
-            setTimeout(() => setToastMessage(null), 4000);
+            showToast(msg);
           }}
         />
 
-        {/* Success Toast */}
+        {/* Toast Notification */}
         {toastMessage && (
           <div className={styles.toast} role="status">
             <span className="material-symbols-outlined" aria-hidden="true">

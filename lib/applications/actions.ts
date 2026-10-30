@@ -164,6 +164,82 @@ export async function updateApplication(
 }
 
 /**
+ * Server Action to quickly update an application's status (used by Kanban drag-and-drop & status actions):
+ * - Verifies user is authenticated and owns the application.
+ * - Records status history.
+ * - Revalidates /dashboard and /applications.
+ */
+export async function updateApplicationStatus(
+  id: string,
+  newStatus: string
+): Promise<UpdateApplicationResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { error: "Sesi autentikasi tidak valid. Silakan login kembali." };
+    }
+
+    if (!id || !newStatus) {
+      return { error: "ID dan status lamaran wajib diisi." };
+    }
+
+    const normalizedNewStatus = normalizeStatus(newStatus);
+
+    // Fetch existing status for accurate history recording
+    const { data: existingApp } = await supabase
+      .from("applications")
+      .select("status")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
+
+    const previousStatus = existingApp?.status || "Unknown";
+
+    const { error: updateError } = await supabase
+      .from("applications")
+      .update({
+        status: normalizedNewStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      console.error("Failed to update application status:", updateError);
+      return { error: updateError.message };
+    }
+
+    // Record history safely (non-blocking)
+    if (previousStatus !== normalizedNewStatus) {
+      try {
+        await supabase.from("application_status_history").insert({
+          user_id: user.id,
+          application_id: id,
+          previous_status: previousStatus,
+          new_status: normalizedNewStatus,
+          created_at: new Date().toISOString(),
+        });
+      } catch (histErr) {
+        console.warn("Failed recording status history to Supabase:", histErr);
+      }
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/applications");
+
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("Unexpected error in updateApplicationStatus:", err);
+    return { error: "Terjadi kesalahan sistem saat memperbarui status lamaran." };
+  }
+}
+
+/**
  * Server Action to delete an application from Supabase:
  * - Verifies user is authenticated and owns the application.
  * - Deletes the row.
