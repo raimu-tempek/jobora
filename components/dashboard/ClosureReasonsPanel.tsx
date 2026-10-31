@@ -66,13 +66,11 @@ export function ClosureReasonsPanel({
 
         {/* Content: Donut Chart & Legend or Empty State */}
         {totalClosed === 0 ? (
-          <div className="py-10 text-center flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-3">
-              <CheckCircle2 size={22} className="text-emerald-500" />
-            </div>
-            <p className="text-sm font-bold text-gray-800 font-heading">100% Lamaran Masih Berjalan</p>
-            <p className="text-xs text-gray-500 mt-1 max-w-xs leading-relaxed">
-              Seluruh proses lamaran Anda saat ini masih berada dalam status aktif dan belum ada yang ditutup atau ditolak.
+          <div className="py-12 text-center text-xs text-gray-400">
+            <CheckCircle2 size={36} className="mx-auto text-emerald-400 mb-2" />
+            <p className="font-semibold text-gray-700">Belum Ada Lamaran Ditutup</p>
+            <p className="text-[11px] text-gray-400 mt-1 max-w-xs mx-auto">
+              Semua lamaran yang tercatat saat ini masih aktif dalam pipeline proses seleksi.
             </p>
           </div>
         ) : (

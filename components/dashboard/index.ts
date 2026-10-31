@@ -26,7 +26,6 @@ export type {
 } from "./RecentApplicationsTable";
 
 export { TopStatsRow } from "./TopStatsRow";
-export { CareerMomentumSignature } from "./CareerMomentumSignature";
 export { ApplicationsActivityPanel } from "./ApplicationsActivityPanel";
 export { ActivePipelinePanel } from "./ActivePipelinePanel";
 export { ClosureReasonsPanel } from "./ClosureReasonsPanel";
