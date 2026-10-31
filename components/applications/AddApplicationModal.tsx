@@ -31,6 +31,7 @@ export interface AddApplicationModalProps {
   initialTab?: "manual" | "ai";
   onClose: () => void;
   onSubmit?: (data: AddApplicationFormData) => void;
+  onDelete?: () => void;
   initialData?: AddApplicationFormData | null;
   mode?: "create" | "edit";
 }
@@ -50,6 +51,7 @@ export function AddApplicationModal({
   initialTab = "manual",
   onClose,
   onSubmit,
+  onDelete,
   initialData = null,
   mode = "create",
 }: AddApplicationModalProps) {
@@ -246,7 +248,7 @@ export function AddApplicationModal({
 
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="initial-status">
-            Status Awal <span className="text-rose-500">*</span>
+            {mode === "edit" ? "Status Lamaran" : "Status Awal"} <span className="text-rose-500">*</span>
           </label>
           <Select
             id="initial-status"
@@ -256,8 +258,8 @@ export function AddApplicationModal({
             size="sm"
             options={[
               { value: "Submitted", label: "Submitted" },
-              { value: "Test", label: "Test" },
-              { value: "Task", label: "Task" },
+              { value: "Test", label: "Technical Test" },
+              { value: "Task", label: "Take Home Task" },
               { value: "Interview HR", label: "Interview HR" },
               { value: "Interview User", label: "Interview User" },
               { value: "LGD", label: "LGD" },
@@ -444,22 +446,56 @@ export function AddApplicationModal({
               {renderFormFields()}
 
               {/* Footer Actions */}
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-100">
-                <button
-                  type="button"
-                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-full transition"
-                  onClick={handleClose}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-sm font-semibold text-white bg-[#107c74] hover:bg-[#0d6861] rounded-full transition shadow-xs flex items-center gap-1.5"
-                >
-                  <CheckCircle2 size={16} />
-                  {mode === "edit" ? "Simpan Perubahan" : "Simpan Lamaran"}
-                </button>
-              </div>
+              {mode === "edit" ? (
+                <div className="pt-3 flex items-center justify-between border-t border-gray-100">
+                  <div>
+                    {onDelete && (
+                      <button
+                        type="button"
+                        className="px-4 py-2 text-sm font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-full transition flex items-center gap-1.5 cursor-pointer"
+                        onClick={onDelete}
+                        aria-label="Delete lamaran"
+                      >
+                        <Trash2 size={15} />
+                        <span>Delete</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-full transition cursor-pointer"
+                      onClick={handleClose}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 text-sm font-semibold text-white bg-[#107c74] hover:bg-[#0d6861] rounded-full transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <CheckCircle2 size={16} />
+                      <span>Save Changes</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-full transition"
+                    onClick={handleClose}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 text-sm font-semibold text-white bg-[#107c74] hover:bg-[#0d6861] rounded-full transition shadow-xs flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 size={16} />
+                    Simpan Lamaran
+                  </button>
+                </div>
+              )}
             </form>
           )}
 

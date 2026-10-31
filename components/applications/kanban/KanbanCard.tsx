@@ -41,14 +41,25 @@ export function KanbanCard({
   onMoveStatus,
 }: KanbanCardProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const dragOccurredRef = React.useRef(false);
   const needsFollowUp = isFollowUp(app);
   const platformIcon = resolvePlatformIcon(app.platform);
+
+  const handleCardClick = () => {
+    if (dragOccurredRef.current || isUpdating) return;
+    if (onEdit) {
+      onEdit(app);
+    } else if (onViewDetail) {
+      onViewDetail(app);
+    }
+  };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (isUpdating) {
       e.preventDefault();
       return;
     }
+    dragOccurredRef.current = true;
     setIsDragging(true);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", app.id);
@@ -58,6 +69,9 @@ export function KanbanCard({
   const handleDragEnd = () => {
     setIsDragging(false);
     onDragEnd();
+    setTimeout(() => {
+      dragOccurredRef.current = false;
+    }, 150);
   };
 
   return (
@@ -71,10 +85,11 @@ export function KanbanCard({
       role="article"
       aria-label={`${app.position || "Posisi"} di ${app.company || "Perusahaan"}`}
       tabIndex={0}
-      onClick={() => onViewDetail(app)}
+      onClick={handleCardClick}
       onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onViewDetail(app);
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onEdit(app);
         }
       }}
     >
@@ -157,9 +172,12 @@ export function KanbanCard({
           <button
             type="button"
             className={styles.actionBtn}
-            title="Lihat Detail"
-            aria-label={`Lihat detail ${app.company}`}
-            onClick={() => onViewDetail(app)}
+            title="Edit Lamaran"
+            aria-label={`Edit ${app.company}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(app);
+            }}
           >
             <span
               className={`material-symbols-outlined ${styles.actionBtnIcon}`}
@@ -174,7 +192,10 @@ export function KanbanCard({
             className={styles.actionBtn}
             title="Edit Lamaran"
             aria-label={`Edit ${app.company}`}
-            onClick={() => onEdit(app)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(app);
+            }}
           >
             <span
               className={`material-symbols-outlined ${styles.actionBtnIcon}`}
@@ -189,7 +210,10 @@ export function KanbanCard({
             className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
             title="Hapus Lamaran"
             aria-label={`Hapus ${app.company}`}
-            onClick={() => onDelete(app)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(app);
+            }}
           >
             <span
               className={`material-symbols-outlined ${styles.actionBtnIcon}`}

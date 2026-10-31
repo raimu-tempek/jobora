@@ -35,13 +35,21 @@ import styles from "./applications.module.css";
 
 const PAGE_SIZE = 10;
 
-function formatISOToInputDate(isoDate: string): string {
-  if (!isoDate) return "";
-  const parts = isoDate.split("T")[0].split("-");
-  if (parts.length === 3) {
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+function formatISOToInputDate(dateStr: string): string {
+  if (!dateStr) return "";
+  const clean = dateStr.split("T")[0].trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+    const [y, m, d] = clean.split("-");
+    return `${d}/${m}/${y}`;
   }
-  return isoDate;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(clean)) {
+    return clean;
+  }
+  if (/^\d{2}-\d{2}-\d{4}$/.test(clean)) {
+    const [d, m, y] = clean.split("-");
+    return `${d}/${m}/${y}`;
+  }
+  return clean;
 }
 
 export interface ApplicationsViewProps {
@@ -238,11 +246,17 @@ export function ApplicationsView({
     if (!editingApplication) return null;
     const knownPlatforms = ["LinkedIn", "Kalibrr", "JobStreet", "Glints", "Career Portal"];
     const isKnown = knownPlatforms.includes(editingApplication.platform);
+
+    let statusVal = editingApplication.status || "Submitted";
+    if (statusVal === "Offering Received") statusVal = "Offering";
+    if (statusVal === "Technical Test") statusVal = "Test";
+    if (statusVal === "Take Home Task") statusVal = "Task";
+
     return {
       company: editingApplication.company,
       position: editingApplication.position,
       jobType: editingApplication.type || "Full-time",
-      initialStatus: editingApplication.status || "Submitted",
+      initialStatus: statusVal,
       applyDate: formatISOToInputDate(editingApplication.date),
       platform: isKnown ? editingApplication.platform : "Lainnya (Others)",
       customPlatform: isKnown ? "" : editingApplication.platform,
@@ -258,9 +272,12 @@ export function ApplicationsView({
           ? data.customPlatform.trim()
           : data.platform?.trim() || "Tidak dicatat";
 
+      const previousApps = localApplications;
+      const targetId = editingApplication.id;
+
       setLocalApplications((prev) =>
         prev.map((app) =>
-          app.id === editingApplication.id
+          app.id === targetId
             ? {
                 ...app,
                 company: data.company.trim(),
@@ -278,12 +295,13 @@ export function ApplicationsView({
       closeModal();
       showToast("Memperbarui lamaran...");
 
-      const res = await updateApplication(editingApplication.id, data);
+      const res = await updateApplication(targetId, data);
 
       if (res.success) {
         showToast("Lamaran berhasil diperbarui!");
         router.refresh();
       } else {
+        setLocalApplications(previousApps);
         alert(res.error || "Gagal memperbarui lamaran.");
         router.refresh();
       }
@@ -299,12 +317,12 @@ export function ApplicationsView({
     }
   };
 
-  const handleDelete = async (target: { id?: string; company: string; position: string }) => {
-    if (!target.id) return;
+  const handleDelete = async (target: { id?: string; company: string; position: string }): Promise<boolean> => {
+    if (!target.id) return false;
     const confirmed = window.confirm(
       `Apakah Anda yakin ingin menghapus lamaran "${target.position} di ${target.company}"?\n\nTindakan ini permanen dan tidak dapat dibatalkan.`
     );
-    if (!confirmed) return;
+    if (!confirmed) return false;
 
     const previousApps = localApplications;
     setLocalApplications((prev) => prev.filter((app) => app.id !== target.id));
@@ -314,10 +332,12 @@ export function ApplicationsView({
     if (res.success) {
       showToast("Lamaran berhasil dihapus!");
       router.refresh();
+      return true;
     } else {
       setLocalApplications(previousApps);
       alert(res.error || "Gagal menghapus lamaran.");
       setToastMessage(null);
+      return false;
     }
   };
 
@@ -545,7 +565,10 @@ export function ApplicationsView({
             <KanbanBoard
               applications={filteredAndSortedApplications}
               onStatusChange={handleKanbanStatusChange}
-              onViewDetail={(app) => setDetailApplication(app)}
+              onViewDetail={(app) => {
+                setEditingApplication(app);
+                setIsModalOpen(true);
+              }}
               onEdit={(app) => {
                 setEditingApplication(app);
                 setIsModalOpen(true);
@@ -583,6 +606,17 @@ export function ApplicationsView({
             initialTab={modalTab}
             onClose={closeModal}
             onSubmit={handleFormSubmit}
+            onDelete={
+              editingApplication
+                ? async () => {
+                    const target = editingApplication;
+                    const success = await handleDelete(target);
+                    if (success) {
+                      closeModal();
+                    }
+                  }
+                : undefined
+            }
           />
         )}
 

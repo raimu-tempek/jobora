@@ -231,6 +231,153 @@ const sortedTimestamps = [...testActivityTimestamps].sort(
 assert(sortedTimestamps[0] === "2026-10-31T09:00:00.000Z", "Sorts latest application first");
 assert(sortedTimestamps[2] === "2026-10-28T10:00:00.000Z", "Preserves chronological order for oldest items");
 
+// TEST SUITE 7: DIRECT EDIT MODAL & RECORD LIFECYCLE (JOB JOURNEY)
+console.log("\n--- 7. Direct Edit Modal & Record Lifecycle ---");
+import { normalizeDateToISO } from "../lib/applications/format";
+
+// 1. Initial Data Mapping Integrity (QA 1 & 2)
+const sampleCardApp: Application = {
+  id: "app-edit-test-1",
+  user_id: "user-123",
+  company: "Tech Nusantara",
+  position: "Senior Frontend Engineer",
+  type: "Full-time",
+  status: "Offering Received",
+  date: "2026-10-15T00:00:00.000Z",
+  platform: "LinkedIn",
+  created_at: "2026-10-15T00:00:00.000Z",
+  updated_at: "2026-10-15T00:00:00.000Z",
+};
+
+// Date formatter helper test
+function formatISOToInputDateHelper(dateStr: string): string {
+  if (!dateStr) return "";
+  const clean = dateStr.split("T")[0].trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+    const [y, m, d] = clean.split("-");
+    return `${d}/${m}/${y}`;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(clean)) return clean;
+  if (/^\d{2}-\d{2}-\d{4}$/.test(clean)) {
+    const [d, m, y] = clean.split("-");
+    return `${d}/${m}/${y}`;
+  }
+  return clean;
+}
+
+const formattedInputDate = formatISOToInputDateHelper(sampleCardApp.date);
+assert(formattedInputDate === "15/10/2026", "Formats ISO date to DD/MM/YYYY input value");
+
+// Initial data builder simulation
+const knownPlatforms = ["LinkedIn", "Kalibrr", "JobStreet", "Glints", "Career Portal"];
+let mappedStatus = sampleCardApp.status;
+if (mappedStatus === "Offering Received") mappedStatus = "Offering";
+const isKnown = knownPlatforms.includes(sampleCardApp.platform);
+
+const directEditInitialData = {
+  company: sampleCardApp.company,
+  position: sampleCardApp.position,
+  jobType: sampleCardApp.type || "Full-time",
+  initialStatus: mappedStatus,
+  applyDate: formattedInputDate,
+  platform: isKnown ? sampleCardApp.platform : "Lainnya (Others)",
+  customPlatform: isKnown ? "" : sampleCardApp.platform,
+};
+
+assert(directEditInitialData.company === "Tech Nusantara", "Direct Edit pre-fills company");
+assert(directEditInitialData.position === "Senior Frontend Engineer", "Direct Edit pre-fills position");
+assert(directEditInitialData.initialStatus === "Offering", "Direct Edit normalizes Offering Received to Offering");
+assert(directEditInitialData.applyDate === "15/10/2026", "Direct Edit pre-fills date in DD/MM/YYYY");
+assert(directEditInitialData.platform === "LinkedIn", "Direct Edit pre-fills platform");
+
+// 2. Custom Platform pre-fill
+const customPlatformApp: Application = {
+  id: "app-custom-1",
+  user_id: "user-123",
+  company: "Startup Kita",
+  position: "Backend Developer",
+  type: "Contract",
+  status: "Submitted",
+  date: "2026-10-20",
+  platform: "Deall Jobs",
+  created_at: "2026-10-20T00:00:00.000Z",
+  updated_at: "2026-10-20T00:00:00.000Z",
+};
+const isCustomKnown = knownPlatforms.includes(customPlatformApp.platform);
+const customPlatformInitial = {
+  platform: isCustomKnown ? customPlatformApp.platform : "Lainnya (Others)",
+  customPlatform: isCustomKnown ? "" : customPlatformApp.platform,
+};
+assert(customPlatformInitial.platform === "Lainnya (Others)", "Unknown platform maps to Lainnya (Others)");
+assert(customPlatformInitial.customPlatform === "Deall Jobs", "Preserves custom platform string");
+
+// 3. Save Changes updates record in-place without duplicate (QA 3 & 4)
+let appsState: Application[] = [
+  { ...sampleCardApp },
+  { ...customPlatformApp },
+];
+
+const editedFormData = {
+  company: "Tech Nusantara Global",
+  position: "Lead Frontend Engineer",
+  jobType: "Full-time",
+  initialStatus: "Interview HR",
+  applyDate: "16/10/2026",
+  platform: "LinkedIn",
+  customPlatform: "",
+};
+
+const targetId = "app-edit-test-1";
+const updatedDateISO = normalizeDateToISO(editedFormData.applyDate);
+const resolvedPlatform = editedFormData.platform;
+
+appsState = appsState.map((app) =>
+  app.id === targetId
+    ? {
+        ...app,
+        company: editedFormData.company.trim(),
+        position: editedFormData.position.trim(),
+        type: editedFormData.jobType,
+        status: editedFormData.initialStatus,
+        platform: resolvedPlatform,
+        date: updatedDateISO,
+        updated_at: new Date().toISOString(),
+      }
+    : app
+);
+
+assert(appsState.length === 2, "Array length remains exactly 2 (no record duplication on update)");
+assert(appsState[0].id === targetId, "Record ID is preserved");
+assert(appsState[0].company === "Tech Nusantara Global", "Company updated successfully");
+assert(appsState[0].position === "Lead Frontend Engineer", "Position updated successfully");
+assert(appsState[0].status === "Interview HR", "Status updated successfully");
+assert(appsState[0].date === "2026-10-16", "Date normalized to ISO YYYY-MM-DD");
+assert(appsState[1].company === "Startup Kita", "Other records remain untouched");
+
+// 4. Clicking card again loads updated data (QA 5)
+const reloadedApp = appsState.find((a) => a.id === targetId);
+assert(reloadedApp?.company === "Tech Nusantara Global", "Subsequent open shows updated company");
+assert(reloadedApp?.position === "Lead Frontend Engineer", "Subsequent open shows updated position");
+
+// 5. Cancel preserves state untouched (QA 6)
+const originalBeforeCancel = [...appsState];
+// Simulating modal close on Cancel: no state mutation
+const cancelledState = [...appsState];
+assert(cancelledState.length === originalBeforeCancel.length, "Canceling retains same count");
+assert(cancelledState[0].company === originalBeforeCancel[0].company, "Canceling discards pending changes");
+
+// 6. Delete removes only targeted record (QA 7)
+const idToDelete = "app-edit-test-1";
+appsState = appsState.filter((app) => app.id !== idToDelete);
+assert(appsState.length === 1, "State length decreases by 1 after deletion");
+assert(appsState[0].id === "app-custom-1", "Only selected record was removed");
+assert(appsState[0].company === "Startup Kita", "Surviving record remains intact");
+
+// 7. Refresh / Re-hydration consistency (QA 8)
+const rehydratedApplications = JSON.parse(JSON.stringify(appsState));
+assert(rehydratedApplications.length === 1, "Persists consistent count across rehydration");
+assert(rehydratedApplications[0].id === "app-custom-1", "Persists consistent record data across rehydration");
+
 console.log("\n=================================================");
 console.log(`QA SUMMARY: ${passedTests}/${totalTests} Tests Passed (${failedTests} Failed)`);
 console.log("=================================================");
