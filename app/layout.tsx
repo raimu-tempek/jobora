@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "Jobora — Job Application Tracker",
+  title: "Jobora — Job Journey Tracker",
   description: "Pantau dan kelola proses lamaran kerja secara rapi dan terstruktur",
 };
 

@@ -146,7 +146,7 @@ export function TopNavigation({
               pathname === "/applications" ? styles.navLinkActive : ""
             }`}
           >
-            <span>Lamaran</span>
+            <span>Job Journey</span>
           </Link>
 
           {/* Finance Tracker Dropdown with Hover & Direct Click to Overview */}
@@ -287,7 +287,7 @@ export function TopNavigation({
                   : "text-gray-700 hover:bg-gray-50"
               }`}
             >
-              <span>Lamaran</span>
+              <span>Job Journey</span>
             </Link>
           </div>
 

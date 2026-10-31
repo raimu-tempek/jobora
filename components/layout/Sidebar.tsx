@@ -68,7 +68,7 @@ export function Sidebar({
       icon: LayoutDashboard,
     },
     {
-      label: "Lamaran",
+      label: "Job Journey",
       href: "/applications",
       icon: Briefcase,
     },

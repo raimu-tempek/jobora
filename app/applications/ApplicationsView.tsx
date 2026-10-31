@@ -386,12 +386,12 @@ export function ApplicationsView({
   };
 
   return (
-    <AppShell title="Daftar Lamaran Kerja" userName={userName}>
+    <AppShell title="Job Journey" userName={userName}>
       <div className={styles.container}>
         {/* 1. Header with Page Title & CTAs */}
         <header className={styles.header}>
           <div className={styles.headerInfo}>
-            <h1 className={styles.title}>Daftar Lamaran Kerja</h1>
+            <h1 className={styles.title}>Job Journey</h1>
             <p className={styles.subtitle}>
               Kelola dan pantau seluruh status lamaran kerja Anda secara terstruktur.
             </p>

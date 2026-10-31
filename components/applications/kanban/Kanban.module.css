@@ -356,8 +356,24 @@
   flex-shrink: 0;
 }
 
+.calendarIcon {
+  font-size: 12px !important;
+  line-height: 1;
+  vertical-align: middle;
+  color: var(--color-text-muted, #627d84);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .platformIcon {
   font-size: 12px !important;
+  line-height: 1;
+  vertical-align: middle;
+  color: var(--color-text-muted, #627d84);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Footer: Quick status move & action buttons */

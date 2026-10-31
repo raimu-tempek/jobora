@@ -78,7 +78,7 @@ export function RecentApplicationsTable({
 
       <div className={styles.footer}>
         <Link href="/applications" className={styles.viewAllLink}>
-          Lihat Semua Lamaran
+          Lihat Semua di Job Journey
           <ArrowRight
             size={16}
             strokeWidth={2.5}

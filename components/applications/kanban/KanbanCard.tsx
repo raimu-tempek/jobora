@@ -117,7 +117,7 @@ export function KanbanCard({
             />
           )}
           <span
-            className="material-symbols-outlined text-[11px] opacity-70"
+            className={`material-symbols-outlined ${styles.calendarIcon}`}
             aria-hidden="true"
           >
             calendar_today
