@@ -464,7 +464,7 @@ export function ApplicationsView({
         </header>
 
         {/* 2. View Switcher: Tabel vs Kanban */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 pb-1">
+        <div className={styles.viewSwitcherRow}>
           <div className={styles.viewSwitcher} role="tablist" aria-label="Pilihan tampilan lamaran">
             <button
               type="button"
@@ -500,7 +500,7 @@ export function ApplicationsView({
         </div>
 
         {/* 3. Filter Pills: Status Summary (Always visible in both Table & Kanban) */}
-        <section aria-label="Status filters">
+        <section aria-label="Status filters" className={styles.filterSection}>
           <FilterPills
             items={filterPillItems}
             active={activeFilter}
@@ -512,7 +512,7 @@ export function ApplicationsView({
         </section>
 
         {/* 4. Search and Table/Kanban Controls: Search Bar, Status Filter, Sort, Export */}
-        <section aria-label="Search and controls">
+        <section aria-label="Search and controls" className={styles.toolbarSection}>
           <TableToolbar
             search={searchQuery}
             onSearchChange={(q) => {

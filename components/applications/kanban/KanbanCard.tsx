@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { Application } from "@/types/application";
 import { formatDate, formatStatus, isStatusActive } from "@/lib/applications/format";
 import { isFollowUp } from "@/lib/applications/reminders";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import styles from "./Kanban.module.css";
+
+const emptySubscribe = () => () => {};
 
 export interface KanbanCardProps {
   app: Application;
@@ -42,9 +45,67 @@ export function KanbanCard({
   const [isDragging, setIsDragging] = useState(false);
   const [isStatusPickerOpen, setIsStatusPickerOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  const [dropdownPos, setDropdownPos] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+  }>({ left: 0 });
+
+  const statusTriggerRef = useRef<HTMLButtonElement>(null);
   const dragOccurredRef = useRef(false);
   const needsFollowUp = isFollowUp(app);
   const platformIcon = resolvePlatformIcon(app.platform);
+
+  // Compute adaptive dropdown position anchored to statusTriggerRef
+  const updateDropdownPosition = useCallback(() => {
+    if (!statusTriggerRef.current) return;
+    const rect = statusTriggerRef.current.getBoundingClientRect();
+    const dropdownWidth = 160;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    // Prefer opening downward if there's enough space; otherwise open upward
+    const openUpwards = spaceBelow < 200 && spaceAbove > spaceBelow;
+
+    let left = rect.left;
+    if (left + dropdownWidth > window.innerWidth - 12) {
+      left = Math.max(12, window.innerWidth - dropdownWidth - 12);
+    }
+    if (left < 12) {
+      left = 12;
+    }
+
+    if (openUpwards) {
+      setDropdownPos({
+        bottom: window.innerHeight - rect.top + 4,
+        left,
+      });
+    } else {
+      setDropdownPos({
+        top: rect.bottom + 4,
+        left,
+      });
+    }
+  }, []);
+
+  const openStatusPicker = useCallback(() => {
+    updateDropdownPosition();
+    setIsStatusPickerOpen(true);
+    setIsMenuOpen(false);
+  }, [updateDropdownPosition]);
+
+  const toggleStatusPicker = useCallback(() => {
+    if (isStatusPickerOpen) {
+      setIsStatusPickerOpen(false);
+    } else {
+      openStatusPicker();
+    }
+  }, [isStatusPickerOpen, openStatusPicker]);
 
   // Close popup or menu on Escape
   useEffect(() => {
@@ -59,10 +120,23 @@ export function KanbanCard({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isStatusPickerOpen, isMenuOpen]);
 
+  // Close status dropdown if container or page scrolls
+  useEffect(() => {
+    if (!isStatusPickerOpen) return;
+    const handleScrollOrResize = () => {
+      setIsStatusPickerOpen(false);
+    };
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    return () => {
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
+  }, [isStatusPickerOpen]);
+
   const handleCardClick = () => {
     if (dragOccurredRef.current || isUpdating) return;
-    setIsStatusPickerOpen((prev) => !prev);
-    setIsMenuOpen(false);
+    toggleStatusPicker();
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
@@ -114,8 +188,8 @@ export function KanbanCard({
         </div>
       )}
 
-      {/* Quick Status Picker Popup */}
-      {isStatusPickerOpen && (
+      {/* Quick Status Dropdown rendered via Portal directly anchored to trigger */}
+      {isStatusPickerOpen && mounted && typeof document !== "undefined" && createPortal(
         <>
           <div
             className={styles.pickerBackdrop}
@@ -125,64 +199,50 @@ export function KanbanCard({
             }}
           />
           <div
-            className={styles.statusPickerPopup}
+            className={styles.statusDropdownPortal}
+            style={{
+              top: dropdownPos.top !== undefined ? `${dropdownPos.top}px` : undefined,
+              bottom: dropdownPos.bottom !== undefined ? `${dropdownPos.bottom}px` : undefined,
+              left: `${dropdownPos.left}px`,
+            }}
             onClick={(e) => e.stopPropagation()}
-            role="dialog"
+            role="listbox"
             aria-label="Pilih status lamaran"
           >
-            <div className={styles.statusPickerHeader}>
-              <span className={styles.statusPickerTitle}>Pilih Status</span>
-              <button
-                type="button"
-                className={styles.statusPickerCloseBtn}
-                title="Tutup"
-                aria-label="Tutup pilihan status"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsStatusPickerOpen(false);
-                }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
-                  close
-                </span>
-              </button>
-            </div>
-
-            <div className={styles.statusPickerList} role="listbox">
-              {availableColumns.map((col) => {
-                const active = isStatusActive(col.status, app.status);
-                return (
-                  <button
-                    key={col.status}
-                    type="button"
-                    role="option"
-                    aria-selected={active}
-                    className={`${styles.statusOptionItem} ${
-                      active ? styles.statusOptionActive : ""
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!active) {
-                        onMoveStatus(app, col.status);
-                      }
-                      setIsStatusPickerOpen(false);
-                    }}
-                  >
-                    <span className={styles.statusOptionText}>{col.title}</span>
-                    {active && (
-                      <span
-                        className={`material-symbols-outlined ${styles.statusActiveCheck}`}
-                        aria-hidden="true"
-                      >
-                        check
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {availableColumns.map((col) => {
+              const active = isStatusActive(col.status, app.status);
+              return (
+                <button
+                  key={col.status}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  className={`${styles.statusOptionItem} ${
+                    active ? styles.statusOptionActive : ""
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!active) {
+                      onMoveStatus(app, col.status);
+                    }
+                    setIsStatusPickerOpen(false);
+                  }}
+                >
+                  <span className={styles.statusOptionText}>{col.title}</span>
+                  {active && (
+                    <span
+                      className={`material-symbols-outlined ${styles.statusActiveCheck}`}
+                      aria-hidden="true"
+                    >
+                      check
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
-        </>
+        </>,
+        document.body
       )}
 
       {/* 1. Header: Company & Position (Multi-line wrap, max 2 lines with line-clamp) */}
@@ -241,14 +301,14 @@ export function KanbanCard({
       {/* 4. Footer: Quick status switcher & action menu (...) */}
       <div className={styles.cardFooter} onClick={(e) => e.stopPropagation()}>
         <button
+          ref={statusTriggerRef}
           type="button"
           className={styles.footerStatusBtn}
           title="Klik untuk ubah status"
           aria-label={`Ubah status ${app.company}`}
           onClick={(e) => {
             e.stopPropagation();
-            setIsStatusPickerOpen((prev) => !prev);
-            setIsMenuOpen(false);
+            toggleStatusPicker();
           }}
         >
           <span

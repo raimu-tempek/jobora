@@ -2,10 +2,10 @@
   background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 12px 16px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 12px;
   box-shadow: var(--shadow-xs);
 }
 
@@ -21,7 +21,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 12px;
   flex: 1;
 }
 
@@ -45,6 +45,7 @@
 
 .searchInput {
   width: 100%;
+  height: 38px;
   padding: 8px 12px 8px 34px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -139,8 +140,8 @@
 }
 
 .exportButton {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-md);
   background: var(--color-surface);
   border: 1px solid var(--color-border);

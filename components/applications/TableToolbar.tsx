@@ -43,7 +43,7 @@ export function TableToolbar({
         </div>
 
         {/* Status filter dropdown */}
-        <div className="min-w-[150px]">
+        <div className="min-w-[155px]">
           <Select
             value={statusFilter}
             onChange={(val) => onStatusFilterChange(val)}
@@ -62,7 +62,7 @@ export function TableToolbar({
         </div>
 
         {/* Sort dropdown */}
-        <div className="min-w-[160px]">
+        <div className="min-w-[165px]">
           <Select
             value={sortBy}
             onChange={(val) => onSortByChange(val)}

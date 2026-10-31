@@ -1,7 +1,8 @@
+.container,
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 20px;
 }
 
 /* Header */
@@ -145,6 +146,14 @@
 }
 
 /* View Switcher */
+.viewSwitcherRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .viewSwitcher {
   display: inline-flex;
   align-items: center;
@@ -152,14 +161,14 @@
   padding: 4px;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
-  gap: 2px;
+  gap: 4px;
 }
 
 .viewSwitchBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: var(--radius-full);
   border: none;
   background: transparent;
@@ -184,6 +193,14 @@
 
 .viewSwitchIcon {
   font-size: 16px !important;
+}
+
+.filterSection {
+  width: 100%;
+}
+
+.toolbarSection {
+  width: 100%;
 }
 
 /* Table Card */
