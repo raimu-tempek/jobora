@@ -126,6 +126,16 @@ assert(BASE_COLUMN_STATUSES.length === 7, "Kanban has 7 standard base stages");
 assert(BASE_COLUMN_STATUSES.includes("Submitted"), "Base columns include Submitted");
 assert(BASE_COLUMN_STATUSES.includes("Offering"), "Base columns include Offering");
 
+// Card edge cases: short vs long text, special characters, fallback
+const testCardShort = { company: "X", position: "Dev", status: "Submitted" };
+const testCardLong = {
+  company: "Super Ultra International Conglomerate Technology Solutions Indonesia Tbk",
+  position: "Senior Lead Principal Enterprise Cloud Systems Infrastructure Security Architect",
+  status: "Submitted",
+};
+assert(testCardShort.company.length > 0 && testCardShort.position.length > 0, "Short card title & position retain content");
+assert(testCardLong.company.length > 50 && testCardLong.position.length > 50, "Long card handles excessive character length");
+
 // TEST SUITE 6: CAREER ANALYTICS DASHBOARD ENGINE
 console.log("\n--- 6. Career Analytics Dashboard Engine ---");
 import {

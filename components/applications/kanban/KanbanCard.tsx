@@ -19,6 +19,16 @@ export interface KanbanCardProps {
   onMoveStatus: (app: Application, targetStatus: string) => void;
 }
 
+function resolvePlatformIcon(platform?: string): string {
+  const norm = (platform || "").toLowerCase();
+  if (norm.includes("linkedin")) return "share";
+  if (norm.includes("kalibrr")) return "public";
+  if (norm.includes("jobstreet")) return "work_history";
+  if (norm.includes("glints")) return "handshake";
+  if (norm.includes("career portal") || norm.includes("portal")) return "domain";
+  return "public";
+}
+
 export function KanbanCard({
   app,
   isUpdating,
@@ -32,6 +42,7 @@ export function KanbanCard({
 }: KanbanCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const needsFollowUp = isFollowUp(app);
+  const platformIcon = resolvePlatformIcon(app.platform);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (isUpdating) {
@@ -58,7 +69,7 @@ export function KanbanCard({
         isUpdating ? styles.cardUpdating : ""
       }`}
       role="article"
-      aria-label={`${app.position} di ${app.company}`}
+      aria-label={`${app.position || "Posisi"} di ${app.company || "Perusahaan"}`}
       tabIndex={0}
       onClick={() => onViewDetail(app)}
       onKeyDown={(e) => {
@@ -74,17 +85,29 @@ export function KanbanCard({
         </div>
       )}
 
-      {/* Header: Company & Position (Max 2 lines clamping with word-break) */}
+      {/* 1. Header: Company & Position (Multi-line wrap, max 2 lines with line-clamp) */}
       <div className={styles.cardHeader}>
-        <h4 className={styles.companyTitle} title={app.company}>
-          {app.company}
+        <h4 className={`${styles.companyTitle} line-clamp-2`} title={app.company}>
+          {app.company || "Tanpa Perusahaan"}
         </h4>
-        <p className={styles.positionTitle} title={app.position}>
-          {app.position}
+        <p className={`${styles.positionTitle} line-clamp-2`} title={app.position}>
+          {app.position || "Tanpa Posisi"}
         </p>
       </div>
 
-      {/* Meta Row: Tanggal Melamar & Status Badge */}
+      {/* 2. Badges Row: Status Badge & Job Type Badge */}
+      <div className={styles.badgesRow}>
+        <div className={styles.statusBadgeWrapper}>
+          <StatusBadge status={app.status} />
+        </div>
+        {app.type && (
+          <span className={styles.typeBadge} title={`Tipe: ${app.type}`}>
+            {app.type}
+          </span>
+        )}
+      </div>
+
+      {/* 3. Meta Row: Applied Date, Follow-up indicator, Platform */}
       <div className={styles.metaRow}>
         <span className={styles.dateText}>
           {needsFollowUp && (
@@ -102,14 +125,21 @@ export function KanbanCard({
           <span>{formatDate(app.date)}</span>
         </span>
 
-        <div className={styles.statusBadgeWrapper}>
-          <StatusBadge status={app.status} />
-        </div>
+        {app.platform && (
+          <span className={styles.platformBadge} title={app.platform}>
+            <span
+              className={`material-symbols-outlined ${styles.platformIcon}`}
+              aria-hidden="true"
+            >
+              {platformIcon}
+            </span>
+            <span>{app.platform}</span>
+          </span>
+        )}
       </div>
 
-      {/* Footer Actions & Direct Status Switcher */}
+      {/* 4. Footer: Quick status switcher & action buttons */}
       <div className={styles.cardFooter} onClick={(e) => e.stopPropagation()}>
-        {/* Keyboard and touch accessible move dropdown */}
         <select
           className={styles.moveSelect}
           value={app.status}
@@ -123,7 +153,6 @@ export function KanbanCard({
           ))}
         </select>
 
-        {/* Action icons */}
         <div className={styles.cardActions}>
           <button
             type="button"

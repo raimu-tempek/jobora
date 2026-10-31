@@ -14,7 +14,7 @@
 }
 
 .kanbanContainer::-webkit-scrollbar-track {
-  background: var(--color-background);
+  background: var(--color-background, #f8fafc);
   border-radius: 999px;
 }
 
@@ -31,7 +31,7 @@
   flex: 0 0 350px;
   width: 350px;
   background: #f8fafc;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border, #e2eaf0);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -44,7 +44,7 @@
 
 .columnDragOver {
   background: #f0fdfa;
-  border: 2px dashed var(--color-primary);
+  border: 2px dashed var(--color-primary, #107c74);
   box-shadow: 0 4px 12px rgba(16, 124, 116, 0.12);
 }
 
@@ -55,7 +55,7 @@
   align-items: center;
   justify-content: center;
   padding: 10px 14px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border, #e2eaf0);
   background: #ffffff;
   border-top-left-radius: 11px;
   border-top-right-radius: 11px;
@@ -97,7 +97,7 @@
   position: absolute;
   inset: -1px;
   border-radius: 50%;
-  background-color: var(--indicator-color, var(--color-primary));
+  background-color: var(--indicator-color, var(--color-primary, #107c74));
   opacity: 0.6;
   z-index: 1;
   pointer-events: none;
@@ -129,7 +129,7 @@
 .columnTitle {
   font-size: 13px;
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--color-text, #132a30);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -152,7 +152,7 @@
   font-size: 11px;
   font-weight: 700;
   background: #e2e8f0;
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, #526970);
   flex-shrink: 0;
 }
 
@@ -188,13 +188,13 @@
 /* Individual Kanban Card */
 .card {
   background: #ffffff;
-  border: 1px solid var(--color-border);
-  border-radius: 9px;
-  padding: 8px 9px;
+  border: 1px solid var(--color-border, #e2eaf0);
+  border-radius: 10px;
+  padding: 9px 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   cursor: grab;
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
   user-select: none;
@@ -202,12 +202,12 @@
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  height: auto;
 }
 
 .card:hover {
   transform: translateY(-1.5px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
   border-color: #cbd5e1;
 }
 
@@ -226,49 +226,90 @@
   opacity: 0.7;
 }
 
-/* Header: Company & Position with Line Clamping (Max 2 lines) */
+/* Header: Company & Position with Multi-line Wrapping & Line Clamping */
 .cardHeader {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 1.5px;
   min-width: 0;
   width: 100%;
-  overflow: hidden;
 }
 
 .companyTitle {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.25;
+  color: var(--color-text, #132a30);
+  line-height: 1.28;
   margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  word-break: break-word;
   min-width: 0;
   max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .positionTitle {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 500;
-  color: var(--color-text-secondary);
-  line-height: 1.3;
+  color: var(--color-text-secondary, #526970);
+  line-height: 1.32;
   margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Badges Row: Status Badge & Job Type Badge */
+.badgesRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+}
+
+.statusBadgeWrapper {
+  display: inline-flex;
   min-width: 0;
   max-width: 100%;
 }
 
-/* Meta: Applied Date & Status Badge */
+.statusBadgeWrapper span {
+  font-size: 10px !important;
+  padding: 1.5px 7px !important;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typeBadge {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  background: var(--color-primary-soft, #e6faf7);
+  color: var(--color-primary, #107c74);
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Meta Row: Applied Date, Follow-up indicator, Platform */
 .metaRow {
   display: flex;
   align-items: center;
@@ -277,7 +318,6 @@
   font-size: 10.5px;
   min-width: 0;
   width: 100%;
-  overflow: hidden;
 }
 
 .dateText {
@@ -285,7 +325,7 @@
   align-items: center;
   gap: 3px;
   font-size: 10px;
-  color: var(--color-text-muted);
+  color: var(--color-text-muted, #627d84);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -302,22 +342,22 @@
   flex-shrink: 0;
 }
 
-.statusBadgeWrapper {
-  flex-shrink: 0;
-  max-width: 58%;
-  min-width: 0;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.statusBadgeWrapper span {
-  font-size: 9.5px !important;
-  padding: 1.5px 6px !important;
-  max-width: 100%;
+.platformBadge {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text-muted, #627d84);
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  white-space: nowrap;
+  max-width: 48%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  display: inline-block;
+  flex-shrink: 0;
+}
+
+.platformIcon {
+  font-size: 12px !important;
 }
 
 /* Footer: Quick status move & action buttons */
@@ -328,7 +368,7 @@
   gap: 3px;
   border-top: 1px solid #f1f5f9;
   padding-top: 5px;
-  margin-top: 1px;
+  margin-top: 2px;
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
@@ -336,11 +376,11 @@
 
 .moveSelect {
   font-size: 10px;
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, #526970);
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 5px;
-  padding: 1.5px 3px;
+  padding: 2px 3px;
   cursor: pointer;
   flex: 1;
   min-width: 0;
@@ -353,7 +393,7 @@
 }
 
 .moveSelect:hover {
-  border-color: var(--color-primary);
+  border-color: var(--color-primary, #107c74);
 }
 
 .cardActions {
@@ -372,7 +412,7 @@
   border-radius: 4px;
   border: none;
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--color-text-muted, #627d84);
   cursor: pointer;
   transition: all 0.12s ease;
   flex-shrink: 0;
@@ -380,7 +420,7 @@
 
 .actionBtn:hover {
   background: #f1f5f9;
-  color: var(--color-text);
+  color: var(--color-text, #132a30);
 }
 
 .actionBtnDanger:hover {
@@ -396,22 +436,22 @@
   position: absolute;
   inset: 0;
   background: rgba(255, 255, 255, 0.85);
-  border-radius: 9px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
   font-size: 10.5px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-primary, #107c74);
   z-index: 10;
 }
 
 .spinner {
   width: 12px;
   height: 12px;
-  border: 2px solid var(--color-primary-soft);
-  border-top-color: var(--color-primary);
+  border: 2px solid var(--color-primary-soft, #e6faf7);
+  border-top-color: var(--color-primary, #107c74);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -429,7 +469,7 @@
   align-items: center;
   justify-content: center;
   padding: 28px 12px;
-  color: var(--color-text-muted);
+  color: var(--color-text-muted, #627d84);
   font-size: 11px;
   text-align: center;
   gap: 4px;
