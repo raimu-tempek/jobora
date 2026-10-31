@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Application } from "@/types/application";
-import { RecruitmentEvent, ApplicationStatusHistory } from "@/types/recruitment";
+import { ApplicationStatusHistory } from "@/types/recruitment";
 import { formatDate } from "@/lib/applications/format";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { fetchStatusHistory } from "@/lib/applications/recruitment-service";
@@ -10,26 +10,21 @@ import { fetchStatusHistory } from "@/lib/applications/recruitment-service";
 export interface ApplicationDetailModalProps {
   isOpen: boolean;
   application: Application | null;
-  events?: RecruitmentEvent[];
   userId?: string;
   onClose: () => void;
   onEdit: (app: Application) => void;
   onDelete: (app: Application) => void;
-  onAddEventForApp?: (app: Application) => void;
 }
 
 export function ApplicationDetailModal({
   isOpen,
   application,
-  events = [],
   userId,
   onClose,
   onEdit,
   onDelete,
-  onAddEventForApp,
 }: ApplicationDetailModalProps) {
-  const [history, setHistory] = useState<ApplicationStatusHistory[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [history, setHistory] = useState<ApplicationStatusHistory[] | null>(null);
 
   useEffect(() => {
     if (!isOpen || !application) return;
@@ -41,11 +36,10 @@ export function ApplicationDetailModal({
         .then((data) => {
           if (isMounted) {
             setHistory(data);
-            setLoadingHistory(false);
           }
         })
         .catch(() => {
-          if (isMounted) setLoadingHistory(false);
+          if (isMounted) setHistory([]);
         });
     }
 
@@ -55,9 +49,6 @@ export function ApplicationDetailModal({
   }, [isOpen, application, userId]);
 
   if (!isOpen || !application) return null;
-
-  // Filter events related to this application
-  const appEvents = events.filter((e) => e.application_id === application.id);
 
   const formatTimestamp = (ts: string) => {
     try {
@@ -84,14 +75,14 @@ export function ApplicationDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex items-start justify-between gap-4">
+        <div className="p-5 border-b border-gray-100 flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-teal-50 text-teal-700">
-                {application.type}
+                {application.type || "Full-time"}
               </span>
               <span className="text-xs text-gray-500">•</span>
-              <span className="text-xs text-gray-500">{application.platform}</span>
+              <span className="text-xs text-gray-500">{application.platform || "Platform"}</span>
             </div>
             <h2 id="app-detail-title" className="text-xl font-bold text-gray-900 leading-snug">
               {application.company}
@@ -112,7 +103,7 @@ export function ApplicationDetailModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6 flex-1">
+        <div className="p-5 space-y-5 flex-1">
           {/* Status & Applied Date */}
           <div className="grid grid-cols-2 gap-3 p-3.5 bg-gray-50 rounded-xl border border-gray-100">
             <div>
@@ -140,11 +131,11 @@ export function ApplicationDetailModal({
               Riwayat Perubahan Status
             </h3>
 
-            {loadingHistory ? (
+            {history === null ? (
               <div className="text-xs text-gray-400 py-2">Memuat riwayat...</div>
             ) : history.length === 0 ? (
               <div className="p-3 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-xs text-gray-500">
-                Status awal dicatat sebagai <strong>{application.status}</strong> sejak tanggal {formatDate(application.date)}. Belum ada riwayat perubahan status lanjutan.
+                Status awal dicatat sebagai <strong>{application.status}</strong> sejak tanggal {formatDate(application.date)}. Belum ada riwayat perpindahan status lanjutan.
               </div>
             ) : (
               <div className="space-y-2 border-l-2 border-teal-500/30 pl-3 ml-1.5">
@@ -164,103 +155,43 @@ export function ApplicationDetailModal({
               </div>
             )}
           </div>
-
-          {/* Section: Scheduled Recruitment Events */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[16px] text-teal-600">
-                  calendar_month
-                </span>
-                Jadwal & Agenda Terkait ({appEvents.length})
-              </h3>
-
-              {onAddEventForApp && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onAddEventForApp(application);
-                  }}
-                  className="text-xs font-semibold text-teal-700 hover:text-teal-800 hover:underline flex items-center gap-1"
-                >
-                  <span className="material-symbols-outlined text-[14px]">add</span>
-                  Tambah Jadwal
-                </button>
-              )}
-            </div>
-
-            {appEvents.length === 0 ? (
-              <div className="p-3 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-xs text-gray-500 flex items-center justify-between">
-                <span>Belum ada jadwal interview atau deadline yang diagendakan.</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {appEvents.map((evt) => (
-                  <div
-                    key={evt.id}
-                    className="p-3 rounded-xl border border-gray-200 bg-white hover:border-gray-300 transition-all flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900">{evt.title}</span>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                          {evt.event_type}
-                        </span>
-                      </div>
-                      <span className="text-gray-500 text-[11px] block mt-0.5">
-                        {formatDate(evt.start_time.split("T")[0])}
-                      </span>
-                    </div>
-
-                    {evt.is_completed ? (
-                      <span className="text-emerald-700 bg-emerald-50 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        Selesai
-                      </span>
-                    ) : (
-                      <span className="text-amber-700 bg-amber-50 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        Mendatang
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50/70 flex items-center justify-between rounded-b-2xl">
+        {/* Footer Actions */}
+        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            className="px-3.5 py-2 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl border border-rose-200 transition-colors flex items-center gap-1.5"
+            onClick={() => {
+              onClose();
+              onDelete(application);
+            }}
+          >
+            <span className="material-symbols-outlined text-[16px]">delete</span>
+            <span>Hapus Lamaran</span>
+          </button>
+
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
+              onClick={onClose}
+            >
+              Tutup
+            </button>
+
+            <button
+              type="button"
+              className="px-4 py-2 text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs"
               onClick={() => {
                 onClose();
                 onEdit(application);
               }}
             >
-              Edit Lamaran
-            </button>
-            <button
-              type="button"
-              className="px-3 py-1.5 rounded-xl border border-red-200 bg-white text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors"
-              onClick={() => {
-                onClose();
-                onDelete(application);
-              }}
-            >
-              Hapus
+              <span className="material-symbols-outlined text-[16px]">edit</span>
+              <span>Edit Lamaran</span>
             </button>
           </div>
-
-          <button
-            type="button"
-            className="px-4 py-1.5 rounded-xl bg-gray-800 text-white text-xs font-semibold hover:bg-gray-900 transition-colors"
-            onClick={onClose}
-          >
-            Tutup
-          </button>
         </div>
       </div>
     </div>

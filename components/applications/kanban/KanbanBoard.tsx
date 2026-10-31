@@ -2,15 +2,12 @@
 
 import React, { useState, useMemo, useRef } from "react";
 import { Application } from "@/types/application";
-import { RecruitmentEvent } from "@/types/recruitment";
 import { formatStatus } from "@/lib/applications/format";
-import { getNearestEventForApplication } from "@/lib/applications/recruitment-service";
 import { KanbanColumn } from "./KanbanColumn";
 import styles from "./Kanban.module.css";
 
 export interface KanbanBoardProps {
   applications: Application[];
-  events?: RecruitmentEvent[];
   onStatusChange: (appId: string, newStatus: string) => Promise<boolean>;
   onViewDetail: (app: Application) => void;
   onEdit: (app: Application) => void;
@@ -79,7 +76,6 @@ const BASE_COLUMNS: ColumnDef[] = [
 
 export function KanbanBoard({
   applications,
-  events = [],
   onStatusChange,
   onViewDetail,
   onEdit,
@@ -116,15 +112,6 @@ export function KanbanBoard({
     return cols;
   }, [applications]);
 
-  // Compute nearest event for each application
-  const nearestEventsMap = useMemo(() => {
-    const map: Record<string, RecruitmentEvent | null> = {};
-    for (const app of applications) {
-      map[app.id] = getNearestEventForApplication(events, app.id);
-    }
-    return map;
-  }, [applications, events]);
-
   // Group applications by status
   const groupedApplications = useMemo(() => {
     const map: Record<string, Application[]> = {};
@@ -158,18 +145,21 @@ export function KanbanBoard({
     draggedAppIdRef.current = null;
   };
 
-  const executeStatusChange = async (appId: string, targetStatus: string) => {
+  const handleDrop = async (
+    _e: React.DragEvent<HTMLDivElement>,
+    targetStatus: string
+  ) => {
+    const appId = draggedAppIdRef.current;
+    if (!appId) return;
+
     const targetApp = applications.find((a) => a.id === appId);
     if (!targetApp) return;
 
-    if (targetApp.status === targetStatus) {
-      return; // No change
+    if (targetApp.status.toLowerCase() === targetStatus.toLowerCase()) {
+      return;
     }
 
-    if (updatingAppIds.has(appId)) {
-      return; // Already updating
-    }
-
+    // Set updating state
     setUpdatingAppIds((prev) => new Set(prev).add(appId));
 
     try {
@@ -180,16 +170,26 @@ export function KanbanBoard({
         next.delete(appId);
         return next;
       });
+      draggedAppIdRef.current = null;
     }
   };
 
-  const handleDrop = (
-    e: React.DragEvent<HTMLDivElement>,
+  const handleMoveStatus = async (
+    app: Application,
     targetStatus: string
   ) => {
-    const appId = e.dataTransfer.getData("text/plain") || draggedAppIdRef.current;
-    if (!appId) return;
-    executeStatusChange(appId, targetStatus);
+    if (app.status.toLowerCase() === targetStatus.toLowerCase()) return;
+
+    setUpdatingAppIds((prev) => new Set(prev).add(app.id));
+    try {
+      await onStatusChange(app.id, targetStatus);
+    } finally {
+      setUpdatingAppIds((prev) => {
+        const next = new Set(prev);
+        next.delete(app.id);
+        return next;
+      });
+    }
   };
 
   const availableColumns = useMemo(
@@ -201,18 +201,17 @@ export function KanbanBoard({
     <div
       className={styles.kanbanContainer}
       role="region"
-      aria-label="Kanban Board Lamaran Kerja"
+      aria-label="Kanban Pelacakan Lamaran Kerja"
     >
-      {columns.map((column) => (
+      {columns.map((col) => (
         <KanbanColumn
-          key={column.id}
-          id={column.id}
-          status={column.status}
-          title={column.title}
-          badgeColor={column.badgeColor}
-          badgeBg={column.badgeBg}
-          applications={groupedApplications[column.status] || []}
-          nearestEventsMap={nearestEventsMap}
+          key={col.id}
+          id={col.id}
+          status={col.status}
+          title={col.title}
+          badgeColor={col.badgeColor}
+          badgeBg={col.badgeBg}
+          applications={groupedApplications[col.status] || []}
           updatingAppIds={updatingAppIds}
           availableColumns={availableColumns}
           onDragStart={handleDragStart}
@@ -221,9 +220,7 @@ export function KanbanBoard({
           onViewDetail={onViewDetail}
           onEdit={onEdit}
           onDelete={onDelete}
-          onMoveStatus={(app, targetStatus) =>
-            executeStatusChange(app.id, targetStatus)
-          }
+          onMoveStatus={handleMoveStatus}
         />
       ))}
     </div>

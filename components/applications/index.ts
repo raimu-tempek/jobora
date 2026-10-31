@@ -25,9 +25,5 @@ export type { PaginationProps } from "./Pagination";
 export { KanbanBoard } from "./kanban/KanbanBoard";
 export type { KanbanBoardProps } from "./kanban/KanbanBoard";
 
-export { RecruitmentCalendar } from "./calendar/RecruitmentCalendar";
-export type { RecruitmentCalendarProps } from "./calendar/RecruitmentCalendar";
-
 export { ApplicationDetailModal } from "./ApplicationDetailModal";
 export type { ApplicationDetailModalProps } from "./ApplicationDetailModal";
-

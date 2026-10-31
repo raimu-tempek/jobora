@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Application } from "@/types/application";
-import { RecruitmentEvent } from "@/types/recruitment";
 import { formatDate } from "@/lib/applications/format";
 import { isFollowUp } from "@/lib/applications/reminders";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
@@ -10,7 +9,6 @@ import styles from "./Kanban.module.css";
 
 export interface KanbanCardProps {
   app: Application;
-  nearestEvent?: RecruitmentEvent | null;
   isUpdating?: boolean;
   availableColumns: { status: string; title: string }[];
   onDragStart: (e: React.DragEvent<HTMLDivElement>, appId: string) => void;
@@ -21,19 +19,8 @@ export interface KanbanCardProps {
   onMoveStatus: (app: Application, targetStatus: string) => void;
 }
 
-function resolvePlatformIcon(platform: string): string {
-  const norm = (platform || "").toLowerCase();
-  if (norm.includes("linkedin")) return "share";
-  if (norm.includes("kalibrr")) return "public";
-  if (norm.includes("jobstreet")) return "work_history";
-  if (norm.includes("glints")) return "handshake";
-  if (norm.includes("career portal") || norm.includes("portal")) return "domain";
-  return "public";
-}
-
 export function KanbanCard({
   app,
-  nearestEvent,
   isUpdating,
   availableColumns,
   onDragStart,
@@ -45,7 +32,6 @@ export function KanbanCard({
 }: KanbanCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const needsFollowUp = isFollowUp(app);
-  const platformIcon = resolvePlatformIcon(app.platform);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     if (isUpdating) {
@@ -63,24 +49,6 @@ export function KanbanCard({
     onDragEnd();
   };
 
-  const formatEventSummary = (evt: RecruitmentEvent) => {
-    try {
-      const d = new Date(evt.start_time);
-      const timeStr = evt.is_all_day
-        ? "Sepanjang hari"
-        : `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-      const day = d.getDate();
-      const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-      const dateStr = `${day} ${months[d.getMonth()]}`;
-      return `${evt.event_type} • ${dateStr} ${timeStr}`;
-    } catch {
-      return evt.title;
-    }
-  };
-
-  const isDeadlineEvent =
-    nearestEvent?.event_type.toLowerCase().includes("deadline") || false;
-
   return (
     <div
       draggable={!isUpdating}
@@ -92,6 +60,7 @@ export function KanbanCard({
       role="article"
       aria-label={`${app.position} di ${app.company}`}
       tabIndex={0}
+      onClick={() => onViewDetail(app)}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           onViewDetail(app);
@@ -105,69 +74,50 @@ export function KanbanCard({
         </div>
       )}
 
-      {/* Header: Company & Position */}
+      {/* Header: Company & Position (Prioritas Utama) */}
       <div className={styles.cardHeader}>
-        <div>
-          <h4 className={styles.companyTitle}>{app.company}</h4>
-          <p className={styles.positionTitle}>{app.position}</p>
+        <div className="min-w-0 flex-1">
+          <h4 className={styles.companyTitle} title={app.company}>
+            {app.company}
+          </h4>
+          <p className={styles.positionTitle} title={app.position}>
+            {app.position}
+          </p>
         </div>
-        <StatusBadge status={app.status} />
+        <div className="shrink-0 scale-90 origin-top-right">
+          <StatusBadge status={app.status} />
+        </div>
       </div>
 
-      {/* Meta tags */}
+      {/* Meta Row: Tanggal Melamar & Indikator Follow-up (Prioritas Utama) */}
       <div className={styles.metaRow}>
-        <span className={styles.typeBadge}>{app.type}</span>
-        <span className={styles.platformBadge}>
-          <span className={`material-symbols-outlined ${styles.platformIcon}`} aria-hidden="true">
-            {platformIcon}
-          </span>
-          {app.platform || "Tidak dicatat"}
-        </span>
-        {needsFollowUp && (
-          <span className={styles.followUpBadge} title="Belum ada progres lebih dari 7 hari">
-            <span className="material-symbols-outlined text-[12px]" aria-hidden="true">
-              schedule
-            </span>
-            Follow-up
-          </span>
-        )}
-      </div>
-
-      {/* Nearest Event / Recruitment schedule if exists */}
-      {nearestEvent && (
-        <div
-          className={`${styles.scheduleBox} ${
-            isDeadlineEvent ? styles.scheduleBoxDeadline : ""
-          }`}
-          title={nearestEvent.title}
-        >
-          <span
-            className={`material-symbols-outlined ${styles.scheduleIcon}`}
-            aria-hidden="true"
-          >
-            {isDeadlineEvent ? "warning" : "event"}
-          </span>
-          <span className={styles.scheduleText}>
-            {formatEventSummary(nearestEvent)}
-          </span>
-        </div>
-      )}
-
-      {/* Date Applied */}
-      <div className={styles.dateRow}>
         <span className={styles.dateText}>
-          <span className="material-symbols-outlined text-[13px]" aria-hidden="true">
+          {needsFollowUp && (
+            <span
+              className={styles.followUpDot}
+              title="Perlu follow-up (lebih dari 7 hari tanpa respon)"
+            />
+          )}
+          <span className="material-symbols-outlined text-[12px] opacity-70" aria-hidden="true">
             calendar_today
           </span>
           {formatDate(app.date)}
         </span>
 
-        {/* Keyboard accessible column changer */}
+        {app.type && (
+          <span className="text-[10px] text-gray-500 font-medium bg-gray-100 px-1.5 py-0.5 rounded">
+            {app.type}
+          </span>
+        )}
+      </div>
+
+      {/* Footer Actions & Direct Status Switcher */}
+      <div className={styles.cardFooter} onClick={(e) => e.stopPropagation()}>
+        {/* Keyboard and touch accessible move dropdown */}
         <select
           className={styles.moveSelect}
           value={app.status}
           onChange={(e) => onMoveStatus(app, e.target.value)}
-          onClick={(e) => e.stopPropagation()}
           aria-label={`Ubah status ${app.company}`}
         >
           {availableColumns.map((col) => (
@@ -176,35 +126,27 @@ export function KanbanCard({
             </option>
           ))}
         </select>
-      </div>
 
-      {/* Footer Actions */}
-      <div className={styles.cardFooter}>
-        <button
-          type="button"
-          className={styles.actionBtn}
-          title="Lihat Detail & Riwayat Status"
-          aria-label={`Lihat detail ${app.company}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onViewDetail(app);
-          }}
-        >
-          <span className={`material-symbols-outlined ${styles.actionBtnIcon}`} aria-hidden="true">
-            visibility
-          </span>
-        </button>
+        {/* Action icons */}
+        <div className={styles.cardActions}>
+          <button
+            type="button"
+            className={styles.actionBtn}
+            title="Lihat Detail"
+            aria-label={`Lihat detail ${app.company}`}
+            onClick={() => onViewDetail(app)}
+          >
+            <span className={`material-symbols-outlined ${styles.actionBtnIcon}`} aria-hidden="true">
+              visibility
+            </span>
+          </button>
 
-        <div className="flex items-center gap-1">
           <button
             type="button"
             className={styles.actionBtn}
             title="Edit Lamaran"
             aria-label={`Edit ${app.company}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(app);
-            }}
+            onClick={() => onEdit(app)}
           >
             <span className={`material-symbols-outlined ${styles.actionBtnIcon}`} aria-hidden="true">
               edit
@@ -216,10 +158,7 @@ export function KanbanCard({
             className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
             title="Hapus Lamaran"
             aria-label={`Hapus ${app.company}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(app);
-            }}
+            onClick={() => onDelete(app)}
           >
             <span className={`material-symbols-outlined ${styles.actionBtnIcon}`} aria-hidden="true">
               delete

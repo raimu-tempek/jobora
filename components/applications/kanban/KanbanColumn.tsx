@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Application } from "@/types/application";
-import { RecruitmentEvent } from "@/types/recruitment";
 import { KanbanCard } from "./KanbanCard";
 import styles from "./Kanban.module.css";
 
@@ -13,7 +12,6 @@ export interface KanbanColumnProps {
   badgeColor: string;
   badgeBg: string;
   applications: Application[];
-  nearestEventsMap: Record<string, RecruitmentEvent | null>;
   updatingAppIds: Set<string>;
   availableColumns: { status: string; title: string }[];
   onDragStart: (e: React.DragEvent<HTMLDivElement>, appId: string) => void;
@@ -30,7 +28,6 @@ export function KanbanColumn({
   title,
   badgeColor,
   applications,
-  nearestEventsMap,
   updatingAppIds,
   availableColumns,
   onDragStart,
@@ -52,7 +49,6 @@ export function KanbanColumn({
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    // Prevent flickering when hovering over children
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsOver(false);
     }
@@ -81,7 +77,9 @@ export function KanbanColumn({
             style={{ backgroundColor: badgeColor }}
             aria-hidden="true"
           />
-          <h3 className={styles.columnTitle}>{title}</h3>
+          <h3 className={styles.columnTitle} title={title}>
+            {title}
+          </h3>
         </div>
         <span className={styles.columnCount} aria-label={`${applications.length} lamaran`}>
           {applications.length}
@@ -98,15 +96,13 @@ export function KanbanColumn({
             >
               inbox
             </span>
-            <p className={styles.emptyText}>Tidak ada lamaran</p>
-            <p className={styles.emptyHint}>Tarik kartu ke kolom ini</p>
+            <span>Belum ada lamaran</span>
           </div>
         ) : (
           applications.map((app) => (
             <KanbanCard
               key={app.id}
               app={app}
-              nearestEvent={nearestEventsMap[app.id]}
               isUpdating={updatingAppIds.has(app.id)}
               availableColumns={availableColumns}
               onDragStart={onDragStart}

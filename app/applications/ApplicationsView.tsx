@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout";
 import {
@@ -11,13 +11,11 @@ import {
   Pagination,
   TableToolbar,
   KanbanBoard,
-  RecruitmentCalendar,
   ApplicationDetailModal,
   type ApplicationItem,
   type AddApplicationFormData,
 } from "@/components/applications";
 import { Application } from "@/types/application";
-import { RecruitmentEvent } from "@/types/recruitment";
 import {
   isInterviewGroup,
   isTestTaskGroup,
@@ -31,13 +29,7 @@ import {
   deleteApplication,
   updateApplicationStatus,
 } from "@/lib/applications/actions";
-import {
-  fetchRecruitmentEvents,
-  saveRecruitmentEvent,
-  deleteRecruitmentEvent,
-  toggleEventCompletion,
-  recordStatusChange,
-} from "@/lib/applications/recruitment-service";
+import { recordStatusChange } from "@/lib/applications/recruitment-service";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./applications.module.css";
 
@@ -64,10 +56,10 @@ export function ApplicationsView({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Active view: "table" | "kanban" | "calendar"
-  const initialView = (searchParams?.get("view") as "table" | "kanban" | "calendar") || "table";
-  const [view, setView] = useState<"table" | "kanban" | "calendar">(
-    ["table", "kanban", "calendar"].includes(initialView) ? initialView : "table"
+  // Active view: "table" | "kanban"
+  const initialView = (searchParams?.get("view") as "table" | "kanban") || "table";
+  const [view, setView] = useState<"table" | "kanban">(
+    ["table", "kanban"].includes(initialView) ? initialView : "table"
   );
 
   const [prevApplications, setPrevApplications] = useState(applications);
@@ -93,35 +85,6 @@ export function ApplicationsView({
         }
       });
     }
-  }, [userId]);
-
-  // Recruitment Events
-  const [events, setEvents] = useState<RecruitmentEvent[]>([]);
-
-  const refreshEvents = useCallback(async (uid: string) => {
-    if (!uid) return;
-    try {
-      const list = await fetchRecruitmentEvents(uid);
-      setEvents(list);
-    } catch (err) {
-      console.warn("Failed loading recruitment events:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!userId) return;
-    let isMounted = true;
-    fetchRecruitmentEvents(userId)
-      .then((list) => {
-        if (isMounted) {
-          setEvents(list);
-        }
-      })
-      .catch((err) => console.warn("Failed loading recruitment events:", err));
-
-    return () => {
-      isMounted = false;
-    };
   }, [userId]);
 
   // Filters and sorting
@@ -312,9 +275,12 @@ export function ApplicationsView({
         )
       );
 
+      closeModal();
+      showToast("Memperbarui lamaran...");
+
       const res = await updateApplication(editingApplication.id, data);
+
       if (res.success) {
-        closeModal();
         showToast("Lamaran berhasil diperbarui!");
         router.refresh();
       } else {
@@ -392,58 +358,15 @@ export function ApplicationsView({
     }
   };
 
-  // Recruitment Event CRUD handlers
-  const handleSaveEvent = async (eventData: Parameters<typeof saveRecruitmentEvent>[1]) => {
-    if (!userId) {
-      return { success: false, error: "Sesi pengguna tidak tersedia." };
-    }
-    const res = await saveRecruitmentEvent(userId, eventData);
-    if (res.success && res.event) {
-      await refreshEvents(userId);
-      showToast("Jadwal agenda berhasil disimpan!");
-      return { success: true };
-    }
-    return { success: false, error: res.error || "Gagal menyimpan agenda." };
-  };
-
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!userId) return false;
-    const res = await deleteRecruitmentEvent(userId, eventId);
-    if (res.success) {
-      await refreshEvents(userId);
-      showToast("Jadwal agenda berhasil dihapus!");
-      return true;
-    }
-    return false;
-  };
-
-  const handleToggleComplete = async (eventId: string) => {
-    if (!userId) return false;
-    const res = await toggleEventCompletion(userId, eventId);
-    if (res.success) {
-      await refreshEvents(userId);
-      showToast(
-        res.is_completed
-          ? "Jadwal ditandai selesai! 🎉"
-          : "Jadwal dibuka kembali."
-      );
-      return true;
-    }
-    return false;
-  };
-
   return (
-    <AppShell title="Daftar Lamaran" userName={userName}>
-      <div className={styles.page}>
-        {/* 1. Page Header Row */}
+    <AppShell title="Daftar Lamaran Kerja" userName={userName}>
+      <div className={styles.container}>
+        {/* 1. Header with Page Title & CTAs */}
         <header className={styles.header}>
-          <div className={styles.headerLeft}>
-            <div className={styles.titleRow}>
-              <h1 className={styles.title}>Daftar Lamaran</h1>
-              <span className={styles.activePill}>Aktif</span>
-            </div>
+          <div className={styles.headerInfo}>
+            <h1 className={styles.title}>Daftar Lamaran Kerja</h1>
             <p className={styles.subtitle}>
-              Kelola dan pantau seluruh progres riwayat lamaran pekerjaanmu secara real-time
+              Kelola dan pantau seluruh status lamaran kerja Anda secara terstruktur.
             </p>
           </div>
 
@@ -493,7 +416,7 @@ export function ApplicationsView({
           </div>
         </header>
 
-        {/* 2. View Switcher & Quick Navigation */}
+        {/* 2. View Switcher: Tabel vs Kanban */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1 pb-1">
           <div className={styles.viewSwitcher} role="tablist" aria-label="Pilihan tampilan lamaran">
             <button
@@ -526,43 +449,10 @@ export function ApplicationsView({
               </span>
               <span>Kanban</span>
             </button>
-
-            <button
-              type="button"
-              role="tab"
-              aria-selected={view === "calendar"}
-              className={`${styles.viewSwitchBtn} ${
-                view === "calendar" ? styles.viewSwitchBtnActive : ""
-              }`}
-              onClick={() => setView("calendar")}
-            >
-              <span className={`material-symbols-outlined ${styles.viewSwitchIcon}`} aria-hidden="true">
-                calendar_month
-              </span>
-              <span>Kalender Rekrutmen</span>
-              {events.length > 0 && (
-                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-teal-100 text-teal-800">
-                  {events.filter((e) => !e.is_completed).length}
-                </span>
-              )}
-            </button>
           </div>
-
-          {/* Quick search input when in Kanban mode */}
-          {view === "kanban" && (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Cari perusahaan di board..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600"
-              />
-            </div>
-          )}
         </div>
 
-        {/* 3. Conditional Content Based on View */}
+        {/* 3. Conditional Rendering based on active View */}
         {view === "table" && (
           <>
             {/* Filter Pills */}
@@ -593,7 +483,7 @@ export function ApplicationsView({
                 sortBy={sortBy}
                 onSortByChange={setSortBy}
                 onExport={() => {
-                  // Export placeholder
+                  // Export CSV
                 }}
               />
             </section>
@@ -632,7 +522,6 @@ export function ApplicationsView({
           <section aria-label="Kanban board lamaran kerja">
             <KanbanBoard
               applications={filteredAndSortedApplications}
-              events={events}
               onStatusChange={handleKanbanStatusChange}
               onViewDetail={(app) => setDetailApplication(app)}
               onEdit={(app) => {
@@ -644,25 +533,11 @@ export function ApplicationsView({
           </section>
         )}
 
-        {view === "calendar" && (
-          <section aria-label="Kalender rekrutmen">
-            <RecruitmentCalendar
-              events={events}
-              applications={localApplications}
-              onSaveEvent={handleSaveEvent}
-              onDeleteEvent={handleDeleteEvent}
-              onToggleComplete={handleToggleComplete}
-              onOpenApplicationDetail={(app) => setDetailApplication(app)}
-            />
-          </section>
-        )}
-
-        {/* Application Detail Modal (View Status History & Linked Events) */}
+        {/* Application Detail Modal (View Status History) */}
         {detailApplication && (
           <ApplicationDetailModal
             isOpen={Boolean(detailApplication)}
             application={detailApplication}
-            events={events}
             userId={userId}
             onClose={() => setDetailApplication(null)}
             onEdit={(app) => {
@@ -673,10 +548,6 @@ export function ApplicationsView({
             onDelete={(app) => {
               setDetailApplication(null);
               handleDelete(app);
-            }}
-            onAddEventForApp={() => {
-              setDetailApplication(null);
-              setView("calendar");
             }}
           />
         )}
@@ -694,13 +565,15 @@ export function ApplicationsView({
         )}
 
         {/* Import Applications Modal */}
-        <ImportModal
-          isOpen={isImportModalOpen}
-          onClose={() => setIsImportModalOpen(false)}
-          onSuccess={(msg) => {
-            showToast(msg);
-          }}
-        />
+        {isImportModalOpen && (
+          <ImportModal
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            onSuccess={(msg) => {
+              showToast(msg);
+            }}
+          />
+        )}
 
         {/* Toast Notification */}
         {toastMessage && (
