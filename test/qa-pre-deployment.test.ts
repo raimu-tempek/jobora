@@ -500,7 +500,7 @@ assert(
   "Clipboard provides user-friendly guidance on non-image paste"
 );
 
-// Test C: Account Card Interaction & Event Propagation
+// Test C: Account Card Direct Management Popup & Event Propagation
 interface MockAccount {
   id: string;
   name: string;
@@ -520,47 +520,43 @@ const mockAccount: MockAccount = {
 };
 
 const trackerState: {
-  detailModalOpen: boolean;
   editModalOpen: boolean;
-  activeAccountForDetail: MockAccount | null;
   activeAccountForEdit: MockAccount | null;
   propagationStopped: boolean;
+  deleteConfirmed: boolean;
 } = {
-  detailModalOpen: false,
   editModalOpen: false,
-  activeAccountForDetail: null,
   activeAccountForEdit: null,
   propagationStopped: false,
+  deleteConfirmed: false,
 };
 
-// Simulate Card Click
+// Simulate 1-Click Card Click (Direct Management: immediately opens edit modal)
 function onCardClick(acc: MockAccount) {
-  trackerState.detailModalOpen = true;
-  trackerState.activeAccountForDetail = acc;
+  trackerState.editModalOpen = true;
+  trackerState.activeAccountForEdit = acc;
 }
 
-// Simulate Edit Button Click (must stop propagation!)
+// Simulate Edit Button Click (opens exact same management modal)
 function onEditClick(e: { stopPropagation: () => void }, acc: MockAccount) {
   e.stopPropagation();
   trackerState.editModalOpen = true;
   trackerState.activeAccountForEdit = acc;
 }
 
-// Trigger card click
+// Trigger card click: exactly 1 click opens edit modal
 onCardClick(mockAccount);
-assert(trackerState.detailModalOpen, "Clicking account card opens detail modal");
-assert(!trackerState.editModalOpen, "Clicking account card does NOT open edit modal");
-assert(trackerState.activeAccountForDetail?.id === "acc-bca-1", "Detail modal receives selected account");
-assert(
-  Boolean(trackerState.activeAccountForDetail && formatIDR(trackerState.activeAccountForDetail.current_balance).replace(/\u00a0/g, " ") === "Rp 7.500.000"),
-  "Detail modal displays formatted current balance"
-);
+assert(trackerState.editModalOpen, "Clicking account card directly opens management popup");
+assert(trackerState.activeAccountForEdit?.id === "acc-bca-1", "Management popup receives selected account");
+assert(trackerState.activeAccountForEdit?.name === "BCA Tahapan", "Management popup pre-fills account name");
+assert(trackerState.activeAccountForEdit?.type === "bank", "Management popup pre-fills account type");
+assert(trackerState.activeAccountForEdit?.initial_balance === 5000000, "Management popup pre-fills initial balance");
 
 // Reset states
-trackerState.detailModalOpen = false;
 trackerState.editModalOpen = false;
+trackerState.activeAccountForEdit = null;
 
-// Trigger edit button with stopPropagation simulation
+// Trigger edit icon click with stopPropagation
 trackerState.propagationStopped = false;
 const mockEvent = {
   stopPropagation: () => {
@@ -570,14 +566,12 @@ const mockEvent = {
 
 onEditClick(mockEvent, mockAccount);
 if (!trackerState.propagationStopped) {
-  // If propagation was not stopped, parent card would also fire
   onCardClick(mockAccount);
 }
 
-assert(trackerState.propagationStopped, "Edit button explicitly calls e.stopPropagation()");
-assert(trackerState.editModalOpen, "Edit button successfully opens edit modal");
-assert(!trackerState.detailModalOpen, "Edit button prevents opening detail modal");
-assert(trackerState.activeAccountForEdit?.name === "BCA Tahapan", "Edit modal receives correct account target");
+assert(trackerState.propagationStopped, "Action buttons inside card call e.stopPropagation()");
+assert(trackerState.editModalOpen, "Edit icon opens the same management popup");
+assert((trackerState.activeAccountForEdit as MockAccount | null)?.name === "BCA Tahapan", "Management popup receives correct account target");
 
 console.log("\n=================================================");
 console.log(`QA SUMMARY: ${passedTests}/${totalTests} Tests Passed (${failedTests} Failed)`);
