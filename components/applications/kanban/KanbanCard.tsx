@@ -74,22 +74,17 @@ export function KanbanCard({
         </div>
       )}
 
-      {/* Header: Company & Position (Prioritas Utama) */}
+      {/* Header: Company & Position (Full width for clear readability) */}
       <div className={styles.cardHeader}>
-        <div className="min-w-0 flex-1">
-          <h4 className={styles.companyTitle} title={app.company}>
-            {app.company}
-          </h4>
-          <p className={styles.positionTitle} title={app.position}>
-            {app.position}
-          </p>
-        </div>
-        <div className="shrink-0 scale-90 origin-top-right">
-          <StatusBadge status={app.status} />
-        </div>
+        <h4 className={styles.companyTitle} title={app.company}>
+          {app.company}
+        </h4>
+        <p className={styles.positionTitle} title={app.position}>
+          {app.position}
+        </p>
       </div>
 
-      {/* Meta Row: Tanggal Melamar & Indikator Follow-up (Prioritas Utama) */}
+      {/* Meta Row: Tanggal Melamar & Status Badge */}
       <div className={styles.metaRow}>
         <span className={styles.dateText}>
           {needsFollowUp && (
@@ -98,17 +93,15 @@ export function KanbanCard({
               title="Perlu follow-up (lebih dari 7 hari tanpa respon)"
             />
           )}
-          <span className="material-symbols-outlined text-[12px] opacity-70" aria-hidden="true">
+          <span className="material-symbols-outlined text-[11px] opacity-70" aria-hidden="true">
             calendar_today
           </span>
           {formatDate(app.date)}
         </span>
 
-        {app.type && (
-          <span className="text-[10px] text-gray-500 font-medium bg-gray-100 px-1.5 py-0.5 rounded">
-            {app.type}
-          </span>
-        )}
+        <div className="shrink-0 scale-[0.82] origin-right">
+          <StatusBadge status={app.status} />
+        </div>
       </div>
 
       {/* Footer Actions & Direct Status Switcher */}
