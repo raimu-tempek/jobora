@@ -74,6 +74,46 @@ const BASE_COLUMNS: ColumnDef[] = [
   },
 ];
 
+/**
+ * Robust status matcher ensuring all applications find the correct Kanban column
+ */
+function findMatchingColumn(appStatus: string, columns: ColumnDef[]): ColumnDef | undefined {
+  const norm = (appStatus || "").trim().toLowerCase();
+
+  // 1. Direct status key match
+  const direct = columns.find((c) => c.status.toLowerCase() === norm);
+  if (direct) return direct;
+
+  // 2. Direct title match (e.g. "Offering Received" matches title of Offering)
+  const byTitle = columns.find((c) => c.title.toLowerCase() === norm);
+  if (byTitle) return byTitle;
+
+  // 3. Synonym / grouping matching
+  if (norm === "offering received" || norm.includes("offer")) {
+    return columns.find((c) => c.status.toLowerCase() === "offering");
+  }
+  if (norm.includes("reject") || norm.includes("tolak")) {
+    return columns.find((c) => c.status.toLowerCase() === "rejected");
+  }
+  if (norm === "interview" || norm.includes("interview hr") || norm.includes("hr interview") || norm.includes("lgd") || norm.includes("fgd")) {
+    return columns.find((c) => c.status.toLowerCase() === "interview hr");
+  }
+  if (norm.includes("interview user") || norm.includes("user interview") || norm.includes("final")) {
+    return columns.find((c) => c.status.toLowerCase() === "interview user");
+  }
+  if (norm === "test & task" || norm.includes("assessment") || norm.includes("test")) {
+    return columns.find((c) => c.status.toLowerCase() === "test");
+  }
+  if (norm.includes("task") || norm.includes("tugas")) {
+    return columns.find((c) => c.status.toLowerCase() === "task");
+  }
+  if (norm.includes("submit") || norm.includes("applied") || !norm) {
+    return columns.find((c) => c.status.toLowerCase() === "submitted");
+  }
+
+  return undefined;
+}
+
 export function KanbanBoard({
   applications,
   onStatusChange,
@@ -93,7 +133,8 @@ export function KanbanBoard({
     const extraStatuses: string[] = [];
     for (const app of applications) {
       if (app.status && !knownStatuses.has(app.status.toLowerCase())) {
-        if (!extraStatuses.includes(app.status)) {
+        const matched = findMatchingColumn(app.status, cols);
+        if (!matched && !extraStatuses.includes(app.status)) {
           extraStatuses.push(app.status);
         }
       }
@@ -112,7 +153,7 @@ export function KanbanBoard({
     return cols;
   }, [applications]);
 
-  // Group applications by status
+  // Group applications by status using robust column matcher
   const groupedApplications = useMemo(() => {
     const map: Record<string, Application[]> = {};
     columns.forEach((c) => {
@@ -120,13 +161,11 @@ export function KanbanBoard({
     });
 
     applications.forEach((app) => {
-      const matchCol = columns.find(
-        (c) => c.status.toLowerCase() === (app.status || "").toLowerCase()
-      );
-      if (matchCol) {
+      const matchCol = findMatchingColumn(app.status, columns);
+      if (matchCol && map[matchCol.status]) {
         map[matchCol.status].push(app);
       } else {
-        // Fallback to Submitted
+        // Fallback to Submitted so no card is ever lost
         map["Submitted"]?.push(app);
       }
     });

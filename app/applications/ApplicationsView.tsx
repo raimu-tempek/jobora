@@ -87,7 +87,7 @@ export function ApplicationsView({
     }
   }, [userId]);
 
-  // Filters and sorting
+  // Filters and sorting - Used across both Table and Kanban views
   const [activeFilter, setActiveFilter] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Semua Status");
@@ -148,11 +148,11 @@ export function ApplicationsView({
     ];
   }, [localApplications]);
 
-  // Filter and sort items client-side from localApplications
+  // Filter and sort items client-side from localApplications (shared by Table and Kanban)
   const filteredAndSortedApplications = useMemo(() => {
     let result = [...localApplications];
 
-    // 1. Quick pill filter using the group helpers
+    // 1. Quick pill filter
     if (activeFilter === "Submitted") {
       result = result.filter((app) => app.status === "Submitted");
     } else if (activeFilter === "Test & Task") {
@@ -358,6 +358,33 @@ export function ApplicationsView({
     }
   };
 
+  // Export to CSV
+  const handleExportCSV = () => {
+    if (filteredAndSortedApplications.length === 0) {
+      alert("Tidak ada data lamaran untuk diexport.");
+      return;
+    }
+
+    const headers = ["Perusahaan", "Posisi", "Status", "Tanggal Melamar", "Tipe", "Platform"];
+    const rows = filteredAndSortedApplications.map((app) => [
+      `"${app.company.replace(/"/g, '""')}"`,
+      `"${app.position.replace(/"/g, '""')}"`,
+      `"${app.status.replace(/"/g, '""')}"`,
+      `"${app.date.split("T")[0]}"`,
+      `"${(app.type || "").replace(/"/g, '""')}"`,
+      `"${(app.platform || "").replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `jobora_lamaran_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <AppShell title="Daftar Lamaran Kerja" userName={userName}>
       <div className={styles.container}>
@@ -452,70 +479,65 @@ export function ApplicationsView({
           </div>
         </div>
 
-        {/* 3. Conditional Rendering based on active View */}
+        {/* 3. Filter Pills: Status Summary (Always visible in both Table & Kanban) */}
+        <section aria-label="Status filters">
+          <FilterPills
+            items={filterPillItems}
+            active={activeFilter}
+            onChange={(filter) => {
+              setActiveFilter(filter);
+              setCurrentPage(1);
+            }}
+          />
+        </section>
+
+        {/* 4. Search and Table/Kanban Controls: Search Bar, Status Filter, Sort, Export */}
+        <section aria-label="Search and controls">
+          <TableToolbar
+            search={searchQuery}
+            onSearchChange={(q) => {
+              setSearchQuery(q);
+              setCurrentPage(1);
+            }}
+            statusFilter={statusFilter}
+            onStatusFilterChange={(s) => {
+              setStatusFilter(s);
+              setCurrentPage(1);
+            }}
+            sortBy={sortBy}
+            onSortByChange={setSortBy}
+            onExport={handleExportCSV}
+          />
+        </section>
+
+        {/* 5. View Content: Table View vs Kanban View */}
         {view === "table" && (
-          <>
-            {/* Filter Pills */}
-            <section aria-label="Status filters">
-              <FilterPills
-                items={filterPillItems}
-                active={activeFilter}
-                onChange={(filter) => {
-                  setActiveFilter(filter);
-                  setCurrentPage(1);
-                }}
-              />
-            </section>
-
-            {/* Table Toolbar */}
-            <section aria-label="Tabel controls">
-              <TableToolbar
-                search={searchQuery}
-                onSearchChange={(q) => {
-                  setSearchQuery(q);
-                  setCurrentPage(1);
-                }}
-                statusFilter={statusFilter}
-                onStatusFilterChange={(s) => {
-                  setStatusFilter(s);
-                  setCurrentPage(1);
-                }}
-                sortBy={sortBy}
-                onSortByChange={setSortBy}
-                onExport={() => {
-                  // Export CSV
-                }}
-              />
-            </section>
-
-            {/* Applications Table & Pagination Container */}
-            <section className={styles.tableCard} aria-label="Daftar lamaran kerja">
-              <ApplicationsTable
-                applications={tableRows}
-                onViewDetail={(item) => {
-                  const target = localApplications.find((a) => a.id === item.id);
-                  if (target) {
-                    setDetailApplication(target);
-                  }
-                }}
-                onEdit={(item) => {
-                  const target = localApplications.find((a) => a.id === item.id);
-                  if (target) {
-                    setEditingApplication(target);
-                    setIsModalOpen(true);
-                  }
-                }}
-                onDelete={(item) => handleDelete(item)}
-              />
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                pageSize={PAGE_SIZE}
-                onPageChange={setCurrentPage}
-              />
-            </section>
-          </>
+          <section className={styles.tableCard} aria-label="Daftar lamaran kerja">
+            <ApplicationsTable
+              applications={tableRows}
+              onViewDetail={(item) => {
+                const target = localApplications.find((a) => a.id === item.id);
+                if (target) {
+                  setDetailApplication(target);
+                }
+              }}
+              onEdit={(item) => {
+                const target = localApplications.find((a) => a.id === item.id);
+                if (target) {
+                  setEditingApplication(target);
+                  setIsModalOpen(true);
+                }
+              }}
+              onDelete={(item) => handleDelete(item)}
+            />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          </section>
         )}
 
         {view === "kanban" && (

@@ -97,32 +97,20 @@ export function KanbanColumn({
 
       {/* Cards list: 2-column grid inside all columns */}
       <div className={styles.cardList}>
-        {applications.length === 0 ? (
-          <div className={styles.emptyState}>
-            <span
-              className={`material-symbols-outlined ${styles.emptyIcon}`}
-              aria-hidden="true"
-            >
-              inbox
-            </span>
-            <span>Belum ada lamaran</span>
-          </div>
-        ) : (
-          applications.map((app) => (
-            <KanbanCard
-              key={app.id}
-              app={app}
-              isUpdating={updatingAppIds.has(app.id)}
-              availableColumns={availableColumns}
-              onDragStart={onDragStart}
-              onDragEnd={onDragEnd}
-              onViewDetail={onViewDetail}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onMoveStatus={onMoveStatus}
-            />
-          ))
-        )}
+        {applications.map((app) => (
+          <KanbanCard
+            key={app.id}
+            app={app}
+            isUpdating={updatingAppIds.has(app.id)}
+            availableColumns={availableColumns}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onViewDetail={onViewDetail}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onMoveStatus={onMoveStatus}
+          />
+        ))}
       </div>
     </div>
   );
