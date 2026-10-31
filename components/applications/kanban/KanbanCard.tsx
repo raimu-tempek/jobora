@@ -74,7 +74,7 @@ export function KanbanCard({
         </div>
       )}
 
-      {/* Header: Company & Position (Full width for clear readability) */}
+      {/* Header: Company & Position (Max 2 lines clamping with word-break) */}
       <div className={styles.cardHeader}>
         <h4 className={styles.companyTitle} title={app.company}>
           {app.company}
@@ -93,13 +93,16 @@ export function KanbanCard({
               title="Perlu follow-up (lebih dari 7 hari tanpa respon)"
             />
           )}
-          <span className="material-symbols-outlined text-[11px] opacity-70" aria-hidden="true">
+          <span
+            className="material-symbols-outlined text-[11px] opacity-70"
+            aria-hidden="true"
+          >
             calendar_today
           </span>
-          {formatDate(app.date)}
+          <span>{formatDate(app.date)}</span>
         </span>
 
-        <div className="shrink-0 scale-[0.82] origin-right">
+        <div className={styles.statusBadgeWrapper}>
           <StatusBadge status={app.status} />
         </div>
       </div>
@@ -129,7 +132,10 @@ export function KanbanCard({
             aria-label={`Lihat detail ${app.company}`}
             onClick={() => onViewDetail(app)}
           >
-            <span className={`material-symbols-outlined ${styles.actionBtnIcon}`} aria-hidden="true">
+            <span
+              className={`material-symbols-outlined ${styles.actionBtnIcon}`}
+              aria-hidden="true"
+            >
               visibility
             </span>
           </button>
@@ -141,7 +147,10 @@ export function KanbanCard({
             aria-label={`Edit ${app.company}`}
             onClick={() => onEdit(app)}
           >
-            <span className={`material-symbols-outlined ${styles.actionBtnIcon}`} aria-hidden="true">
+            <span
+              className={`material-symbols-outlined ${styles.actionBtnIcon}`}
+              aria-hidden="true"
+            >
               edit
             </span>
           </button>
@@ -153,7 +162,10 @@ export function KanbanCard({
             aria-label={`Hapus ${app.company}`}
             onClick={() => onDelete(app)}
           >
-            <span className={`material-symbols-outlined ${styles.actionBtnIcon}`} aria-hidden="true">
+            <span
+              className={`material-symbols-outlined ${styles.actionBtnIcon}`}
+              aria-hidden="true"
+            >
               delete
             </span>
           </button>

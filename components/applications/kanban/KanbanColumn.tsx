@@ -69,24 +69,33 @@ export function KanbanColumn({
       role="region"
       aria-label={`Kolom ${title}`}
     >
-      {/* Column Header */}
+      {/* Column Header: Title & Radar Dot Centered Horizontally */}
       <div className={styles.columnHeader}>
-        <div className={styles.columnTitleGroup}>
-          <span
-            className={styles.statusDot}
-            style={{ backgroundColor: badgeColor }}
-            aria-hidden="true"
-          />
+        <div
+          className={styles.columnTitleGroup}
+          style={{ "--indicator-color": badgeColor } as React.CSSProperties}
+        >
+          <div className={styles.radarWrapper} aria-hidden="true">
+            <span className={styles.radarWave} />
+            <span
+              className={styles.statusDot}
+              style={{ backgroundColor: badgeColor }}
+            />
+          </div>
           <h3 className={styles.columnTitle} title={title}>
             {title}
           </h3>
         </div>
-        <span className={styles.columnCount} aria-label={`${applications.length} lamaran`}>
+
+        <span
+          className={styles.columnCount}
+          aria-label={`${applications.length} lamaran`}
+        >
           {applications.length}
         </span>
       </div>
 
-      {/* Cards list */}
+      {/* Cards list: 2-column grid inside all columns */}
       <div className={styles.cardList}>
         {applications.length === 0 ? (
           <div className={styles.emptyState}>

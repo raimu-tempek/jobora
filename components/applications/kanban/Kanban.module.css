@@ -48,49 +48,106 @@
   box-shadow: 0 4px 12px rgba(16, 124, 116, 0.12);
 }
 
+/* Column Header: Title and Indicator centered horizontally */
 .columnHeader {
-  padding: 10px 12px;
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--color-border);
   background: #ffffff;
   border-top-left-radius: 11px;
   border-top-right-radius: 11px;
   flex-shrink: 0;
+  min-height: 44px;
 }
 
 .columnTitleGroup {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
+  max-width: calc(100% - 64px);
   min-width: 0;
+}
+
+/* Radar & Indicator Dot */
+.radarWrapper {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .statusDot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  position: relative;
+  z-index: 2;
   flex-shrink: 0;
+  box-shadow: 0 0 0 1.5px #ffffff;
+}
+
+.radarWave {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  background-color: var(--indicator-color, var(--color-primary));
+  opacity: 0.6;
+  z-index: 1;
+  pointer-events: none;
+  animation: radarPing 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes radarPing {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radarWave {
+    animation: none;
+    display: none;
+  }
 }
 
 .columnTitle {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-text);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: center;
 }
 
 .columnCount {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
@@ -128,6 +185,7 @@
   background: #cbd5e1;
 }
 
+/* Individual Kanban Card */
 .card {
   background: #ffffff;
   border: 1px solid var(--color-border);
@@ -142,6 +200,9 @@
   user-select: none;
   position: relative;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .card:hover {
@@ -165,11 +226,14 @@
   opacity: 0.7;
 }
 
+/* Header: Company & Position with Line Clamping (Max 2 lines) */
 .cardHeader {
   display: flex;
   flex-direction: column;
   gap: 1px;
   min-width: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .companyTitle {
@@ -178,9 +242,14 @@
   color: var(--color-text);
   line-height: 1.25;
   margin: 0;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .positionTitle {
@@ -189,11 +258,17 @@
   color: var(--color-text-secondary);
   line-height: 1.3;
   margin: 0;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+  max-width: 100%;
 }
 
+/* Meta: Applied Date & Status Badge */
 .metaRow {
   display: flex;
   align-items: center;
@@ -201,6 +276,8 @@
   gap: 4px;
   font-size: 10.5px;
   min-width: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .dateText {
@@ -212,6 +289,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
 }
 
 .followUpDot {
@@ -223,6 +302,25 @@
   flex-shrink: 0;
 }
 
+.statusBadgeWrapper {
+  flex-shrink: 0;
+  max-width: 58%;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.statusBadgeWrapper span {
+  font-size: 9.5px !important;
+  padding: 1.5px 6px !important;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+/* Footer: Quick status move & action buttons */
 .cardFooter {
   display: flex;
   align-items: center;
@@ -231,6 +329,9 @@
   border-top: 1px solid #f1f5f9;
   padding-top: 5px;
   margin-top: 1px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .moveSelect {
@@ -243,8 +344,11 @@
   cursor: pointer;
   flex: 1;
   min-width: 0;
-  max-width: 80px;
+  max-width: 76px;
   outline: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
   transition: border-color 0.15s ease;
 }
 
@@ -271,6 +375,7 @@
   color: var(--color-text-muted);
   cursor: pointer;
   transition: all 0.12s ease;
+  flex-shrink: 0;
 }
 
 .actionBtn:hover {
