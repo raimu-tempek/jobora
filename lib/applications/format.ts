@@ -23,6 +23,35 @@ export function formatStatus(status: string): string {
 }
 
 /**
+ * Compares column status with application status with synonym & case resilience.
+ */
+export function isStatusActive(colStatus: string, appStatus: string): boolean {
+  if (colStatus === appStatus) return true;
+  const colNorm = (colStatus || "").trim().toLowerCase();
+  const appNorm = (appStatus || "").trim().toLowerCase();
+  if (colNorm === appNorm) return true;
+  if (
+    (colNorm === "offering" || colNorm === "offering received") &&
+    (appNorm === "offering" || appNorm === "offering received")
+  ) {
+    return true;
+  }
+  if (
+    (colNorm === "test" || colNorm === "technical test") &&
+    (appNorm === "test" || appNorm === "technical test")
+  ) {
+    return true;
+  }
+  if (
+    (colNorm === "task" || colNorm === "take home task") &&
+    (appNorm === "task" || appNorm === "take home task")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Returns true if status is active / still in progress:
  * Submitted, Test, Task, Interview HR, Interview User, LGD, FGD
  * (everything except Offering and Rejected).

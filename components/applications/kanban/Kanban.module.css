@@ -448,6 +448,250 @@
   font-size: 13px !important;
 }
 
+/* Footer Quick Status Button & Three Dots Menu */
+.footerStatusBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2.5px 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #526970);
+  cursor: pointer;
+  min-width: 0;
+  max-width: 95px;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.footerStatusBtn:hover {
+  background: #e6faf7;
+  border-color: var(--color-primary, #107c74);
+  color: var(--color-primary, #107c74);
+}
+
+.footerStatusText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.moreMenuContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.actionBtnActive {
+  background: #e2e8f0;
+  color: var(--color-text, #132a30);
+}
+
+/* Invisible Backdrops to close picker/menu on click outside */
+.pickerBackdrop,
+.menuBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: transparent;
+  cursor: default;
+}
+
+/* Quick Status Picker Popup (anchored directly on card) */
+.statusPickerPopup {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 100%;
+  max-height: 220px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid var(--color-primary, #107c74);
+  box-shadow: 0 10px 25px -3px rgba(16, 124, 116, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: statusPickerIn 0.12s ease-out;
+  cursor: default;
+}
+
+@keyframes statusPickerIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.statusPickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.statusPickerTitle {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--color-text, #132a30);
+}
+
+.statusPickerCloseBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.statusPickerCloseBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.statusPickerList {
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.statusPickerList::-webkit-scrollbar {
+  width: 4px;
+}
+
+.statusPickerList::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.statusOptionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 7px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all 0.1s ease;
+  min-width: 0;
+}
+
+.statusOptionItem:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.statusOptionActive {
+  background: #e6faf7;
+  color: #107c74;
+  font-weight: 700;
+}
+
+.statusOptionActive:hover {
+  background: #d5f5f0;
+  color: #0d6861;
+}
+
+.statusOptionText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.statusActiveCheck {
+  font-size: 13px !important;
+  color: #107c74;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+/* Three dots Action Menu Dropdown */
+.actionMenuDropdown {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+  padding: 4px;
+  min-width: 110px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: statusPickerIn 0.12s ease-out;
+  cursor: default;
+}
+
+.actionMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+}
+
+.actionMenuItem:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.actionMenuItemDanger {
+  color: #dc2626;
+}
+
+.actionMenuItemDanger:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.actionMenuIcon {
+  font-size: 14px !important;
+  color: inherit;
+  flex-shrink: 0;
+}
+
 .savingOverlay {
   position: absolute;
   inset: 0;

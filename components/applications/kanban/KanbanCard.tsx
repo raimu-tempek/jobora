@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Application } from "@/types/application";
-import { formatDate } from "@/lib/applications/format";
+import { formatDate, formatStatus, isStatusActive } from "@/lib/applications/format";
 import { isFollowUp } from "@/lib/applications/reminders";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import styles from "./Kanban.module.css";
@@ -13,7 +13,7 @@ export interface KanbanCardProps {
   availableColumns: { status: string; title: string }[];
   onDragStart: (e: React.DragEvent<HTMLDivElement>, appId: string) => void;
   onDragEnd: () => void;
-  onViewDetail: (app: Application) => void;
+  onViewDetail?: (app: Application) => void;
   onEdit: (app: Application) => void;
   onDelete: (app: Application) => void;
   onMoveStatus: (app: Application, targetStatus: string) => void;
@@ -35,27 +35,38 @@ export function KanbanCard({
   availableColumns,
   onDragStart,
   onDragEnd,
-  onViewDetail,
   onEdit,
   onDelete,
   onMoveStatus,
 }: KanbanCardProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const dragOccurredRef = React.useRef(false);
+  const [isStatusPickerOpen, setIsStatusPickerOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const dragOccurredRef = useRef(false);
   const needsFollowUp = isFollowUp(app);
   const platformIcon = resolvePlatformIcon(app.platform);
 
+  // Close popup or menu on Escape
+  useEffect(() => {
+    if (!isStatusPickerOpen && !isMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsStatusPickerOpen(false);
+        setIsMenuOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isStatusPickerOpen, isMenuOpen]);
+
   const handleCardClick = () => {
     if (dragOccurredRef.current || isUpdating) return;
-    if (onEdit) {
-      onEdit(app);
-    } else if (onViewDetail) {
-      onViewDetail(app);
-    }
+    setIsStatusPickerOpen((prev) => !prev);
+    setIsMenuOpen(false);
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-    if (isUpdating) {
+    if (isUpdating || isStatusPickerOpen || isMenuOpen) {
       e.preventDefault();
       return;
     }
@@ -76,7 +87,7 @@ export function KanbanCard({
 
   return (
     <div
-      draggable={!isUpdating}
+      draggable={!isUpdating && !isStatusPickerOpen && !isMenuOpen}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`${styles.card} ${isDragging ? styles.cardDragging : ""} ${
@@ -89,7 +100,10 @@ export function KanbanCard({
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onEdit(app);
+          handleCardClick();
+        } else if (e.key === "Escape") {
+          setIsStatusPickerOpen(false);
+          setIsMenuOpen(false);
         }
       }}
     >
@@ -98,6 +112,77 @@ export function KanbanCard({
           <div className={styles.spinner} />
           <span>Menyimpan...</span>
         </div>
+      )}
+
+      {/* Quick Status Picker Popup */}
+      {isStatusPickerOpen && (
+        <>
+          <div
+            className={styles.pickerBackdrop}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsStatusPickerOpen(false);
+            }}
+          />
+          <div
+            className={styles.statusPickerPopup}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Pilih status lamaran"
+          >
+            <div className={styles.statusPickerHeader}>
+              <span className={styles.statusPickerTitle}>Pilih Status</span>
+              <button
+                type="button"
+                className={styles.statusPickerCloseBtn}
+                title="Tutup"
+                aria-label="Tutup pilihan status"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsStatusPickerOpen(false);
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                  close
+                </span>
+              </button>
+            </div>
+
+            <div className={styles.statusPickerList} role="listbox">
+              {availableColumns.map((col) => {
+                const active = isStatusActive(col.status, app.status);
+                return (
+                  <button
+                    key={col.status}
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    className={`${styles.statusOptionItem} ${
+                      active ? styles.statusOptionActive : ""
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!active) {
+                        onMoveStatus(app, col.status);
+                      }
+                      setIsStatusPickerOpen(false);
+                    }}
+                  >
+                    <span className={styles.statusOptionText}>{col.title}</span>
+                    {active && (
+                      <span
+                        className={`material-symbols-outlined ${styles.statusActiveCheck}`}
+                        aria-hidden="true"
+                      >
+                        check
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
       )}
 
       {/* 1. Header: Company & Position (Multi-line wrap, max 2 lines with line-clamp) */}
@@ -153,75 +238,104 @@ export function KanbanCard({
         )}
       </div>
 
-      {/* 4. Footer: Quick status switcher & action buttons */}
+      {/* 4. Footer: Quick status switcher & action menu (...) */}
       <div className={styles.cardFooter} onClick={(e) => e.stopPropagation()}>
-        <select
-          className={styles.moveSelect}
-          value={app.status}
-          onChange={(e) => onMoveStatus(app, e.target.value)}
+        <button
+          type="button"
+          className={styles.footerStatusBtn}
+          title="Klik untuk ubah status"
           aria-label={`Ubah status ${app.company}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsStatusPickerOpen((prev) => !prev);
+            setIsMenuOpen(false);
+          }}
         >
-          {availableColumns.map((col) => (
-            <option key={col.status} value={col.status}>
-              {col.title}
-            </option>
-          ))}
-        </select>
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: 12, color: "var(--color-primary, #107c74)" }}
+            aria-hidden="true"
+          >
+            swap_horiz
+          </span>
+          <span className={styles.footerStatusText}>{formatStatus(app.status)}</span>
+        </button>
 
-        <div className={styles.cardActions}>
+        <div className={styles.moreMenuContainer}>
           <button
             type="button"
-            className={styles.actionBtn}
-            title="Edit Lamaran"
-            aria-label={`Edit ${app.company}`}
+            className={`${styles.actionBtn} ${isMenuOpen ? styles.actionBtnActive : ""}`}
+            title="Menu opsi lamaran"
+            aria-label={`Menu opsi untuk ${app.company}`}
+            aria-expanded={isMenuOpen}
             onClick={(e) => {
               e.stopPropagation();
-              onEdit(app);
+              setIsMenuOpen((prev) => !prev);
+              setIsStatusPickerOpen(false);
             }}
           >
             <span
               className={`material-symbols-outlined ${styles.actionBtnIcon}`}
               aria-hidden="true"
             >
-              visibility
+              more_horiz
             </span>
           </button>
 
-          <button
-            type="button"
-            className={styles.actionBtn}
-            title="Edit Lamaran"
-            aria-label={`Edit ${app.company}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(app);
-            }}
-          >
-            <span
-              className={`material-symbols-outlined ${styles.actionBtnIcon}`}
-              aria-hidden="true"
-            >
-              edit
-            </span>
-          </button>
+          {isMenuOpen && (
+            <>
+              <div
+                className={styles.menuBackdrop}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(false);
+                }}
+              />
+              <div
+                className={styles.actionMenuDropdown}
+                onClick={(e) => e.stopPropagation()}
+                role="menu"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.actionMenuItem}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMenuOpen(false);
+                    onEdit(app);
+                  }}
+                >
+                  <span
+                    className={`material-symbols-outlined ${styles.actionMenuIcon}`}
+                    aria-hidden="true"
+                  >
+                    edit
+                  </span>
+                  <span>Edit Detail</span>
+                </button>
 
-          <button
-            type="button"
-            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-            title="Hapus Lamaran"
-            aria-label={`Hapus ${app.company}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(app);
-            }}
-          >
-            <span
-              className={`material-symbols-outlined ${styles.actionBtnIcon}`}
-              aria-hidden="true"
-            >
-              delete
-            </span>
-          </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={`${styles.actionMenuItem} ${styles.actionMenuItemDanger}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMenuOpen(false);
+                    onDelete(app);
+                  }}
+                >
+                  <span
+                    className={`material-symbols-outlined ${styles.actionMenuIcon}`}
+                    aria-hidden="true"
+                  >
+                    delete
+                  </span>
+                  <span>Hapus</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

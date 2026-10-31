@@ -233,7 +233,15 @@ assert(sortedTimestamps[2] === "2026-10-28T10:00:00.000Z", "Preserves chronologi
 
 // TEST SUITE 7: DIRECT EDIT MODAL & RECORD LIFECYCLE (JOB JOURNEY)
 console.log("\n--- 7. Direct Edit Modal & Record Lifecycle ---");
-import { normalizeDateToISO } from "../lib/applications/format";
+import { normalizeDateToISO, isStatusActive } from "../lib/applications/format";
+
+// 0. Quick Status Picker & Active Status Matching
+assert(isStatusActive("Submitted", "Submitted"), "Direct match active status");
+assert(isStatusActive("Offering", "Offering Received"), "Synonym match: Offering matches Offering Received");
+assert(isStatusActive("Offering", "offering"), "Case-insensitive active status match");
+assert(isStatusActive("Test", "Technical Test"), "Synonym match: Test matches Technical Test");
+assert(isStatusActive("Task", "Take Home Task"), "Synonym match: Task matches Take Home Task");
+assert(!isStatusActive("Interview HR", "Submitted"), "Different status is correctly recognized as inactive");
 
 // 1. Initial Data Mapping Integrity (QA 1 & 2)
 const sampleCardApp: Application = {
