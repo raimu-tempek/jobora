@@ -148,7 +148,7 @@ export function KanbanCard({
         >
           {availableColumns.map((col) => (
             <option key={col.status} value={col.status}>
-              → {col.title}
+              {col.title}
             </option>
           ))}
         </select>
