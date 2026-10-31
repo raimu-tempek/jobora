@@ -86,10 +86,11 @@ export function JobSourcePerformancePanel({
                 hoveredIndex={hoveredIndex}
                 onHoverChange={setHoveredIndex}
               >
-                {pieData.map((_, i) => (
+                {pieData.map((d, i) => (
                   <PieSlice
-                    key={pieData[i]?.label || i}
+                    key={d.label || i}
                     index={i}
+                    color={d.color}
                     showGlow={false}
                     hoverEffect="translate"
                     hoverOffset={8}
@@ -123,7 +124,7 @@ export function JobSourcePerformancePanel({
                   onMouseLeave={() => setHoveredIndex(null)}
                   className={`px-3 py-2 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-[13px] ${
                     hoveredIndex === idx
-                      ? "bg-[#e6faf7] border-[#107c74]/40 shadow-2xs text-[#107c74]"
+                      ? "bg-gray-50 border-gray-300 shadow-2xs"
                       : "bg-white border-gray-100 hover:border-gray-200 text-gray-800"
                   }`}
                 >

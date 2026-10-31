@@ -273,6 +273,24 @@ assert(withUnknown.totalApplications === 6, "Total applications includes unrecor
 const unknownItem = withUnknown.items.find((it) => it.label === "Tidak diketahui");
 assert(unknownItem !== undefined && unknownItem.count === 2, "Normalizes blank and 'Tidak dicatat' to 'Tidak diketahui' with count 2");
 
+// Muted Accent Color Palette Verification
+const linkedInItem = perf.items.find((it) => it.label === "LinkedIn");
+assert(linkedInItem?.color === "#6689A8", "LinkedIn is mapped to Dusty Blue (#6689A8)");
+
+const glintsItem = perf.items.find((it) => it.label === "Glints");
+assert(glintsItem?.color === "#C77D67", "Glints is mapped to Terracotta (#C77D67)");
+
+const jobstreetItem = perf.items.find((it) => it.label === "JobStreet");
+assert(jobstreetItem?.color === "#9382B5", "JobStreet is mapped to Muted Lavender (#9382B5)");
+
+const kalibrrItem = perf.items.find((it) => it.label === "Kalibrr");
+assert(kalibrrItem?.color === "#C49A4A", "Kalibrr is mapped to Golden Ochre (#C49A4A)");
+
+assert(unknownItem?.color === "#788493", "Tidak diketahui is mapped to Slate (#788493)");
+
+const distinctColors = new Set(perf.items.map((it) => it.color));
+assert(distinctColors.size === perf.items.length, "All Job Source categories have unique distinct colors");
+
 // TEST SUITE 7: DIRECT EDIT MODAL & RECORD LIFECYCLE (JOB JOURNEY)
 console.log("\n--- 7. Direct Edit Modal & Record Lifecycle ---");
 import { normalizeDateToISO, isStatusActive } from "../lib/applications/format";

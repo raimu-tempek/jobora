@@ -567,31 +567,82 @@ export interface JobSourcePerformanceItem {
   color: string;
 }
 
-const KNOWN_PLATFORM_COLORS: Record<string, string> = {
-  linkedin: "#0a66c2",
-  glints: "#f97316",
-  jobstreet: "#8b5cf6",
-  kalibrr: "#10b981",
-  "website perusahaan": "#107c74",
-  "portal karir": "#0d9488",
-  "career portal": "#0d9488",
-  indeed: "#06b6d4",
-  internasional: "#6366f1",
-  referral: "#ec4899",
-  "tidak diketahui": "#94a3b8",
+/**
+ * Muted Accent Colors Palette:
+ * - Dusty Blue: #6689A8
+ * - Muted Lavender: #9382B5
+ * - Terracotta: #C77D67
+ * - Golden Ochre: #C49A4A
+ * - Deep Teal: #43877F
+ * - Slate: #788493
+ *
+ * Plus harmonious derivative accents for additional categories:
+ * - Dusty Berry: #B0657B
+ * - Warm Olive: #708A58
+ * - Indigo Denim: #546E8C
+ * - Warm Cinnamon: #B87B42
+ * - Muted Plum: #8C5875
+ * - Sage Teal: #528F85
+ */
+export const JOB_SOURCE_COLORS: Record<string, string> = {
+  linkedin: "#6689A8",             // Dusty Blue
+  jobstreet: "#9382B5",            // Muted Lavender
+  glints: "#C77D67",               // Terracotta
+  kalibrr: "#C49A4A",              // Golden Ochre
+  "website perusahaan": "#43877F",  // Deep Teal
+  "company website": "#43877F",
+  "portal karir": "#43877F",
+  "career portal": "#43877F",
+  "tidak diketahui": "#788493",    // Slate
+  "tidak dicatat": "#788493",
+  unknown: "#788493",
+
+  // Extended Harmonious Accents
+  indeed: "#546E8C",               // Indigo Denim
+  "tech in asia": "#B87B42",       // Warm Cinnamon
+  techinasia: "#B87B42",
+  kitalulus: "#B0657B",            // Dusty Berry
+  referral: "#708A58",             // Warm Olive
+  rekomendasi: "#708A58",
+  internasional: "#546E8C",
+  lainnya: "#8C5875",              // Muted Plum
+  "lainnya (others)": "#8C5875",
 };
 
-const FALLBACK_PLATFORM_COLORS = [
-  "#107c74",
-  "#3b82f6",
-  "#f59e0b",
-  "#8b5cf6",
-  "#ec4899",
-  "#14b8a6",
-  "#6366f1",
-  "#84cc16",
-  "#f43f5e",
+export const EXTENDED_MUTED_PALETTE = [
+  "#6689A8", // Dusty Blue
+  "#9382B5", // Muted Lavender
+  "#C77D67", // Terracotta
+  "#C49A4A", // Golden Ochre
+  "#43877F", // Deep Teal
+  "#788493", // Slate
+  "#B0657B", // Dusty Berry
+  "#708A58", // Warm Olive
+  "#546E8C", // Indigo Denim
+  "#B87B42", // Warm Cinnamon
+  "#8C5875", // Muted Plum
+  "#528F85", // Sage Teal
 ];
+
+export function resolveJobSourceColor(label: string): string {
+  const norm = label.toLowerCase().trim();
+  if (JOB_SOURCE_COLORS[norm]) {
+    return JOB_SOURCE_COLORS[norm];
+  }
+  for (const [key, color] of Object.entries(JOB_SOURCE_COLORS)) {
+    if (norm.includes(key)) {
+      return color;
+    }
+  }
+  // Deterministic hash on string so that any custom category consistently gets the exact same color
+  let hash = 0;
+  for (let i = 0; i < norm.length; i++) {
+    hash = (hash << 5) - hash + norm.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % EXTENDED_MUTED_PALETTE.length;
+  return EXTENDED_MUTED_PALETTE[index];
+}
 
 function normalizePlatformLabel(rawPlatform?: string | null): string {
   if (!rawPlatform) return "Tidak diketahui";
@@ -623,6 +674,7 @@ function normalizePlatformLabel(rawPlatform?: string | null): string {
  * Computes Job Source Performance breakdown:
  * - Aggregates actual applications by the `platform` field.
  * - Missing or empty platforms are categorized as "Tidak diketahui".
+ * - Assigns consistent Muted Accent Colors per category.
  * - Sorts by count descending (tie-break alphabetically, "Tidak diketahui" last).
  */
 export function computeJobSourcePerformance(applications: Application[]): {
@@ -649,7 +701,6 @@ export function computeJobSourcePerformance(applications: Application[]): {
     return a.localeCompare(b);
   });
 
-  let fallbackColorIndex = 0;
   const items: JobSourcePerformanceItem[] = sortedLabels.map((label) => {
     const count = counts[label];
     const percentage =
@@ -657,15 +708,7 @@ export function computeJobSourcePerformance(applications: Application[]): {
         ? Math.round((count / totalApplications) * 100)
         : 0;
 
-    const lower = label.toLowerCase();
-    let color = KNOWN_PLATFORM_COLORS[lower];
-    if (!color) {
-      color =
-        FALLBACK_PLATFORM_COLORS[
-          fallbackColorIndex % FALLBACK_PLATFORM_COLORS.length
-        ];
-      fallbackColorIndex++;
-    }
+    const color = resolveJobSourceColor(label);
 
     return {
       key: label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
