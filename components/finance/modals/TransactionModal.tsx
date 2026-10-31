@@ -28,6 +28,7 @@ import {
   ChevronDown,
   ShoppingBag,
   Edit3,
+  ClipboardPaste,
 } from "lucide-react";
 
 interface TransactionModalProps {
@@ -88,6 +89,10 @@ export function TransactionModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
+  const [clipboardFeedback, setClipboardFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [extractedData, setExtractedData] = useState<ReceiptScanResult | null>(null);
 
   // Field Utama (Identik persis dengan Manual: tipe, judul, nominal, tanggal, akun, kategori, metode, deskripsi)
@@ -121,6 +126,7 @@ export function TransactionModal({
     }
     setIsProcessing(false);
     setOcrError(null);
+    setClipboardFeedback(null);
     setExtractedData(null);
     setScanType("expense");
     setScanTitle("");
@@ -257,6 +263,127 @@ export function TransactionModal({
     }
   }, [scanAmount, scanDate, scanAccountId, userId, initialData]);
 
+  // Scan OCR File Handlers
+  const handleFileSelect = useCallback((selectedFile: File) => {
+    if (!selectedFile) return;
+
+    if (!selectedFile.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
+      setOcrError("Hanya file format JPG, PNG, atau WEBP yang didukung.");
+      return;
+    }
+
+    setFile(selectedFile);
+    setOcrError(null);
+    setClipboardFeedback(null);
+    setExtractedData(null);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(selectedFile);
+  }, []);
+
+  const extractImageFromClipboard = useCallback(
+    (dataTransfer: DataTransfer | null): boolean => {
+      if (!dataTransfer) return false;
+
+      const items = dataTransfer.items;
+      if (items && items.length > 0) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.type.startsWith("image/")) {
+            const blob = item.getAsFile();
+            if (blob) {
+              const ext = blob.type.split("/")[1] || "png";
+              const pastedFile = new File(
+                [blob],
+                `struk-clipboard-${Date.now()}.${ext}`,
+                { type: blob.type }
+              );
+              handleFileSelect(pastedFile);
+              setClipboardFeedback({
+                type: "success",
+                message: "Gambar struk berhasil ditempel dari clipboard!",
+              });
+              setTimeout(() => {
+                setClipboardFeedback((prev) =>
+                  prev?.type === "success" ? null : prev
+                );
+              }, 4000);
+              return true;
+            }
+          }
+        }
+      }
+
+      const files = dataTransfer.files;
+      if (files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          if (f.type.startsWith("image/")) {
+            handleFileSelect(f);
+            setClipboardFeedback({
+              type: "success",
+              message: "Gambar struk berhasil ditempel dari clipboard!",
+            });
+            setTimeout(() => {
+              setClipboardFeedback((prev) =>
+                prev?.type === "success" ? null : prev
+              );
+            }, 4000);
+            return true;
+          }
+        }
+      }
+
+      return false;
+    },
+    [handleFileSelect]
+  );
+
+  // Global paste handler when modal is open and on scan tab
+  useEffect(() => {
+    if (!isOpen || activeTab !== "scan") return;
+
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      const activeEl = document.activeElement as HTMLElement | null;
+      const target = e.target as HTMLElement | null;
+      const isTextInput =
+        (target &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable)) ||
+        (activeEl &&
+          (activeEl.tagName === "INPUT" ||
+            activeEl.tagName === "TEXTAREA" ||
+            activeEl.isContentEditable));
+
+      if (isTextInput) return;
+
+      const handled = extractImageFromClipboard(e.clipboardData);
+      if (handled) {
+        e.preventDefault();
+      } else {
+        setClipboardFeedback({
+          type: "error",
+          message:
+            "Clipboard tidak berisi file gambar. Silakan salin gambar struk atau gunakan screenshot (Win + Shift + S).",
+        });
+        setTimeout(() => {
+          setClipboardFeedback((prev) =>
+            prev?.type === "error" ? null : prev
+          );
+        }, 5000);
+      }
+    };
+
+    window.addEventListener("paste", handleGlobalPaste);
+    return () => {
+      window.removeEventListener("paste", handleGlobalPaste);
+    };
+  }, [isOpen, activeTab, extractImageFromClipboard]);
+
   // Escape key handler
   useEffect(() => {
     if (!isOpen) return;
@@ -270,28 +397,6 @@ export function TransactionModal({
   }, [isOpen, handleClose]);
 
   if (!isOpen) return null;
-
-  // ---------------------------------------------------------------------------
-  // Scan OCR File Handlers
-  // ---------------------------------------------------------------------------
-  const handleFileSelect = (selectedFile: File) => {
-    if (!selectedFile) return;
-
-    if (!selectedFile.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
-      setOcrError("Hanya file format JPG, PNG, atau WEBP yang didukung.");
-      return;
-    }
-
-    setFile(selectedFile);
-    setOcrError(null);
-    setExtractedData(null);
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
-  };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -810,10 +915,31 @@ export function TransactionModal({
 
                   {/* Drop Zone */}
                   <div
+                    role="button"
+                    tabIndex={0}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-200 hover:border-[#107c74] rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition bg-white hover:bg-[#e6faf7]/20 min-h-[160px]"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      const handled = extractImageFromClipboard(e.clipboardData);
+                      if (handled) {
+                        e.preventDefault();
+                      } else {
+                        setClipboardFeedback({
+                          type: "error",
+                          message:
+                            "Clipboard tidak berisi file gambar. Silakan salin gambar struk atau gunakan screenshot (Win + Shift + S).",
+                        });
+                      }
+                    }}
+                    className="border-2 border-dashed border-gray-200 hover:border-[#107c74] focus:border-[#107c74] focus:ring-2 focus:ring-[#107c74]/20 focus:outline-none rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition bg-white hover:bg-[#e6faf7]/20 min-h-[160px] group"
+                    title="Klik untuk memilih file atau tekan Ctrl + V untuk paste gambar"
                   >
                     <input
                       ref={fileInputRef}
@@ -824,14 +950,67 @@ export function TransactionModal({
                         if (e.target.files?.[0]) handleFileSelect(e.target.files[0]);
                       }}
                     />
-                    <ScanLine size={34} className="text-[#107c74] mb-2" />
+                    <div className="w-10 h-10 rounded-xl bg-[#e6faf7] text-[#107c74] flex items-center justify-center mb-2 group-hover:scale-105 transition-transform shadow-2xs">
+                      <ScanLine size={22} />
+                    </div>
                     <p className="font-semibold text-xs text-gray-800">
                       Pilih atau Geser Foto Struk
                     </p>
                     <p className="text-[11px] text-gray-400 mt-0.5">
                       JPG, PNG, atau WEBP (hanya untuk scan)
                     </p>
+                    <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gray-50 border border-gray-200 text-[10.5px] text-gray-600 shadow-2xs">
+                      <ClipboardPaste size={12} className="text-[#107c74]" />
+                      <span>
+                        Bisa langsung{" "}
+                        <kbd className="font-mono font-semibold bg-white border border-gray-200 px-1 py-0.2 rounded text-[10px] text-gray-800">
+                          Ctrl + V
+                        </kbd>{" "}
+                        (Paste)
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Clipboard Feedback Banner */}
+                  {clipboardFeedback && (
+                    <div
+                      className={`mt-2.5 p-2.5 rounded-xl border text-xs flex items-start gap-2 animate-in fade-in duration-150 ${
+                        clipboardFeedback.type === "success"
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-amber-50 border-amber-200 text-amber-800"
+                      }`}
+                    >
+                      {clipboardFeedback.type === "success" ? (
+                        <CheckCircle2
+                          size={15}
+                          className="shrink-0 mt-0.5 text-emerald-600"
+                        />
+                      ) : (
+                        <AlertCircle
+                          size={15}
+                          className="shrink-0 mt-0.5 text-amber-600"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <p className="font-semibold text-[11px]">
+                          {clipboardFeedback.type === "success"
+                            ? "Gambar Berhasil Ditempel"
+                            : "Peringatan Clipboard"}
+                        </p>
+                        <p className="text-[11px] mt-0.5">
+                          {clipboardFeedback.message}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setClipboardFeedback(null)}
+                        className="text-gray-400 hover:text-gray-600 p-0.5"
+                        aria-label="Tutup notifikasi"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  )}
 
                   {/* Preview & Action Buttons */}
                   {previewUrl && (

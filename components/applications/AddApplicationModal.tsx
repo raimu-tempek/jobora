@@ -13,6 +13,7 @@ import {
   Calendar,
   Lock,
   ImageIcon,
+  ClipboardPaste,
 } from "lucide-react";
 
 export interface AddApplicationFormData {
@@ -141,6 +142,68 @@ export function AddApplicationModal({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, handleClose]);
+
+  const extractPastedImage = useCallback((dataTransfer: DataTransfer | null): boolean => {
+    if (!dataTransfer) return false;
+    const items = dataTransfer.items;
+    if (items && items.length > 0) {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.startsWith("image/")) {
+          const blob = item.getAsFile();
+          if (blob) {
+            const ext = blob.type.split("/")[1] || "png";
+            const pastedFile = new File(
+              [blob],
+              `screenshot-${Date.now()}.${ext}`,
+              { type: blob.type }
+            );
+            setUploadedFile(pastedFile);
+            setFilePreviewUrl(URL.createObjectURL(pastedFile));
+            return true;
+          }
+        }
+      }
+    }
+    const files = dataTransfer.files;
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        if (f.type.startsWith("image/")) {
+          setUploadedFile(f);
+          setFilePreviewUrl(URL.createObjectURL(f));
+          return true;
+        }
+      }
+    }
+    return false;
+  }, []);
+
+  // Global paste handler when modal is open and in AI screenshot tab
+  useEffect(() => {
+    if (!isOpen || activeTab !== "ai") return;
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      const activeEl = document.activeElement as HTMLElement | null;
+      const target = e.target as HTMLElement | null;
+      const isTextInput =
+        (target &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable)) ||
+        (activeEl &&
+          (activeEl.tagName === "INPUT" ||
+            activeEl.tagName === "TEXTAREA" ||
+            activeEl.isContentEditable));
+      if (isTextInput) return;
+
+      const handled = extractPastedImage(e.clipboardData);
+      if (handled) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("paste", handleGlobalPaste);
+    return () => window.removeEventListener("paste", handleGlobalPaste);
+  }, [isOpen, activeTab, extractPastedImage]);
 
   if (!isOpen) return null;
 
@@ -524,22 +587,40 @@ export function AddApplicationModal({
                       onClick={() => fileInputRef.current?.click()}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={handleDrop}
+                      onPaste={(e) => {
+                        const handled = extractPastedImage(e.clipboardData);
+                        if (handled) e.preventDefault();
+                      }}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
                           fileInputRef.current?.click();
                         }
                       }}
-                      className="border-2 border-dashed border-gray-200 hover:border-[#107c74] rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition bg-white hover:bg-[#e6faf7]/20 min-h-[160px]"
+                      className="border-2 border-dashed border-gray-200 hover:border-[#107c74] focus:border-[#107c74] focus:ring-2 focus:ring-[#107c74]/20 focus:outline-none rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition bg-white hover:bg-[#e6faf7]/20 min-h-[160px] group"
+                      title="Klik untuk memilih file atau tekan Ctrl + V untuk paste screenshot"
                     >
-                      <ImageIcon size={34} className="text-[#107c74] mb-2" />
+                      <div className="w-10 h-10 rounded-xl bg-[#e6faf7] text-[#107c74] flex items-center justify-center mb-2 group-hover:scale-105 transition-transform shadow-2xs">
+                        <ImageIcon size={22} />
+                      </div>
                       <p className="font-semibold text-xs text-gray-800">
                         Pilih atau Geser Screenshot
                       </p>
                       <p className="text-[11px] text-gray-400 mt-0.5">
                         PNG, JPG, atau WEBP (maks. 5MB)
                       </p>
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gray-50 border border-gray-200 text-[10.5px] text-gray-600 shadow-2xs">
+                        <ClipboardPaste size={12} className="text-[#107c74]" />
+                        <span>
+                          Bisa langsung{" "}
+                          <kbd className="font-mono font-semibold bg-white border border-gray-200 px-1 py-0.2 rounded text-[10px] text-gray-800">
+                            Ctrl + V
+                          </kbd>{" "}
+                          (Paste)
+                        </span>
+                      </div>
                     </div>
                   ) : (
                     /* Preview Card */

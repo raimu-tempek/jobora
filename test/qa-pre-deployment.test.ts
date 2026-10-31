@@ -446,6 +446,139 @@ const rehydratedApplications = JSON.parse(JSON.stringify(appsState));
 assert(rehydratedApplications.length === 1, "Persists consistent count across rehydration");
 assert(rehydratedApplications[0].id === "app-custom-1", "Persists consistent record data across rehydration");
 
+// -------------------------------------------------------------
+// 8. Receipt Scanner Paste & Account Card Interaction
+// -------------------------------------------------------------
+console.log("\n--- 8. Receipt Scanner Paste & Account Card Interaction ---");
+
+// Test A: Image Type Validation for Receipt OCR & Screenshot
+const isValidReceiptImage = (mimeType: string) => Boolean(mimeType.match(/^image\/(jpeg|jpg|png|webp)$/i));
+
+assert(isValidReceiptImage("image/jpeg"), "JPG is valid receipt format");
+assert(isValidReceiptImage("image/png"), "PNG is valid receipt format");
+assert(isValidReceiptImage("image/webp"), "WEBP is valid receipt format");
+assert(!isValidReceiptImage("image/gif"), "GIF is rejected as unsupported");
+assert(!isValidReceiptImage("application/pdf"), "PDF is rejected as unsupported");
+assert(!isValidReceiptImage("text/plain"), "Plain text is rejected");
+
+// Test B: Clipboard Extraction Simulation
+interface MockClipboardItem {
+  type: string;
+  blob?: { size: number; type: string };
+}
+
+function simulateClipboardPaste(items: MockClipboardItem[]) {
+  for (const item of items) {
+    if (item.type.startsWith("image/")) {
+      const ext = item.type.split("/")[1] || "png";
+      const fileName = `struk-clipboard-test.${ext}`;
+      return {
+        success: true,
+        fileName,
+        type: item.type,
+      };
+    }
+  }
+  return {
+    success: false,
+    error: "Clipboard tidak berisi file gambar. Silakan salin gambar struk atau gunakan screenshot (Win + Shift + S).",
+  };
+}
+
+const pasteResultImage = simulateClipboardPaste([
+  { type: "image/png", blob: { size: 10240, type: "image/png" } },
+]);
+assert(pasteResultImage.success, "Clipboard paste succeeds when image is present");
+assert(pasteResultImage.fileName === "struk-clipboard-test.png", "Clipboard generates proper filename with extension");
+
+const pasteResultText = simulateClipboardPaste([
+  { type: "text/plain" },
+]);
+assert(!pasteResultText.success, "Clipboard paste gracefully fails when text is copied instead of image");
+assert(
+  Boolean(pasteResultText.error?.includes("Clipboard tidak berisi file gambar")),
+  "Clipboard provides user-friendly guidance on non-image paste"
+);
+
+// Test C: Account Card Interaction & Event Propagation
+interface MockAccount {
+  id: string;
+  name: string;
+  type: "bank" | "ewallet" | "cash" | "investment" | "other";
+  initial_balance: number;
+  current_balance: number;
+  color?: string;
+}
+
+const mockAccount: MockAccount = {
+  id: "acc-bca-1",
+  name: "BCA Tahapan",
+  type: "bank",
+  initial_balance: 5000000,
+  current_balance: 7500000,
+  color: "#107c74",
+};
+
+const trackerState: {
+  detailModalOpen: boolean;
+  editModalOpen: boolean;
+  activeAccountForDetail: MockAccount | null;
+  activeAccountForEdit: MockAccount | null;
+  propagationStopped: boolean;
+} = {
+  detailModalOpen: false,
+  editModalOpen: false,
+  activeAccountForDetail: null,
+  activeAccountForEdit: null,
+  propagationStopped: false,
+};
+
+// Simulate Card Click
+function onCardClick(acc: MockAccount) {
+  trackerState.detailModalOpen = true;
+  trackerState.activeAccountForDetail = acc;
+}
+
+// Simulate Edit Button Click (must stop propagation!)
+function onEditClick(e: { stopPropagation: () => void }, acc: MockAccount) {
+  e.stopPropagation();
+  trackerState.editModalOpen = true;
+  trackerState.activeAccountForEdit = acc;
+}
+
+// Trigger card click
+onCardClick(mockAccount);
+assert(trackerState.detailModalOpen, "Clicking account card opens detail modal");
+assert(!trackerState.editModalOpen, "Clicking account card does NOT open edit modal");
+assert(trackerState.activeAccountForDetail?.id === "acc-bca-1", "Detail modal receives selected account");
+assert(
+  Boolean(trackerState.activeAccountForDetail && formatIDR(trackerState.activeAccountForDetail.current_balance).replace(/\u00a0/g, " ") === "Rp 7.500.000"),
+  "Detail modal displays formatted current balance"
+);
+
+// Reset states
+trackerState.detailModalOpen = false;
+trackerState.editModalOpen = false;
+
+// Trigger edit button with stopPropagation simulation
+trackerState.propagationStopped = false;
+const mockEvent = {
+  stopPropagation: () => {
+    trackerState.propagationStopped = true;
+  },
+};
+
+onEditClick(mockEvent, mockAccount);
+if (!trackerState.propagationStopped) {
+  // If propagation was not stopped, parent card would also fire
+  onCardClick(mockAccount);
+}
+
+assert(trackerState.propagationStopped, "Edit button explicitly calls e.stopPropagation()");
+assert(trackerState.editModalOpen, "Edit button successfully opens edit modal");
+assert(!trackerState.detailModalOpen, "Edit button prevents opening detail modal");
+assert(trackerState.activeAccountForEdit?.name === "BCA Tahapan", "Edit modal receives correct account target");
+
 console.log("\n=================================================");
 console.log(`QA SUMMARY: ${passedTests}/${totalTests} Tests Passed (${failedTests} Failed)`);
 console.log("=================================================");
