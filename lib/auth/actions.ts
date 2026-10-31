@@ -17,6 +17,11 @@ export async function signIn(formData: FormData): Promise<AuthActionResult> {
     return { error: "Email dan kata sandi wajib diisi." };
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { error: "Format email tidak valid. Silakan periksa kembali." };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -24,9 +29,20 @@ export async function signIn(formData: FormData): Promise<AuthActionResult> {
   });
 
   if (error) {
-    // Provide user-friendly Indonesian message for invalid credentials
-    if (error.message.toLowerCase().includes("invalid login credentials")) {
-      return { error: "Email atau kata sandi salah. Silakan coba lagi." };
+    const msg = error.message.toLowerCase();
+    if (msg.includes("invalid login credentials")) {
+      return { error: "Email atau kata sandi salah. Silakan periksa kembali." };
+    }
+    if (msg.includes("email not confirmed")) {
+      return {
+        error:
+          "Email belum dikonfirmasi. Silakan periksa kotak masuk email Anda untuk verifikasi.",
+      };
+    }
+    if (msg.includes("too many requests") || msg.includes("rate limit")) {
+      return {
+        error: "Terlalu banyak percobaan masuk. Harap tunggu beberapa saat.",
+      };
     }
     return { error: error.message };
   }
@@ -43,6 +59,15 @@ export async function signUp(formData: FormData): Promise<AuthActionResult> {
     return { error: "Semua kolom wajib diisi." };
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { error: "Format email tidak valid. Masukkan email yang benar." };
+  }
+
+  if (password.length < 6) {
+    return { error: "Kata sandi harus terdiri dari minimal 6 karakter." };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -55,6 +80,16 @@ export async function signUp(formData: FormData): Promise<AuthActionResult> {
   });
 
   if (error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes("already registered") || msg.includes("already exists")) {
+      return {
+        error:
+          "Email ini sudah terdaftar. Silakan gunakan email lain atau masuk ke akun Anda.",
+      };
+    }
+    if (msg.includes("password") && msg.includes("least")) {
+      return { error: "Kata sandi harus terdiri dari minimal 6 karakter." };
+    }
     return { error: error.message };
   }
 

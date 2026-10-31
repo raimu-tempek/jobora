@@ -12,6 +12,7 @@ export default async function DashboardPage() {
 
   const userName =
     (user?.user_metadata?.full_name as string | undefined) ||
+    (user?.user_metadata?.name as string | undefined) ||
     (user?.email as string | undefined) ||
     undefined;
 

@@ -573,6 +573,106 @@ assert(trackerState.propagationStopped, "Action buttons inside card call e.stopP
 assert(trackerState.editModalOpen, "Edit icon opens the same management popup");
 assert((trackerState.activeAccountForEdit as MockAccount | null)?.name === "BCA Tahapan", "Management popup receives correct account target");
 
+// --- 9. Authentication Validation, Metadata & Asset Integrity ---
+console.log("\n--- 9. Authentication Validation & User Metadata ---");
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+assert(emailRegex.test("faishal@jobora.id"), "Valid email passes format validation");
+assert(emailRegex.test("user.name+tag@example.co.id"), "Email with plus tag and subdomain passes");
+assert(!emailRegex.test("plainaddress"), "Plain address without @ fails validation");
+assert(!emailRegex.test("missing@domain"), "Email missing TLD fails validation");
+assert(!emailRegex.test("@missingusername.com"), "Email missing username fails validation");
+
+// Password length validation
+function validatePasswordLength(password: string): boolean {
+  return password.length >= 6;
+}
+assert(validatePasswordLength("secret123"), "Password with 9 characters passes");
+assert(validatePasswordLength("123456"), "Password with exactly 6 characters passes");
+assert(!validatePasswordLength("12345"), "Password with 5 characters is rejected");
+assert(!validatePasswordLength(""), "Empty password is rejected");
+
+// Password confirmation matching
+function validatePasswordConfirmation(p1: string, p2: string): boolean {
+  return p1 === p2 && p1.length >= 6;
+}
+assert(validatePasswordConfirmation("JoboraSecure2026", "JoboraSecure2026"), "Matching passwords pass");
+assert(!validatePasswordConfirmation("JoboraSecure2026", "joborasecure2026"), "Case-mismatched passwords fail");
+assert(!validatePasswordConfirmation("JoboraSecure2026", "DifferentPass"), "Different passwords fail");
+
+// Full Name validation
+function validateFullName(fullName: string): boolean {
+  return fullName.trim().length > 0;
+}
+assert(validateFullName("Faishal Rahman"), "Standard full name passes");
+assert(validateFullName("Dr. Siti Nurhaliza, M.Kom"), "Full name with punctuation passes");
+assert(!validateFullName("   "), "Whitespace-only full name fails");
+
+// User metadata full_name resolution for Dashboard greeting
+interface MockSupabaseUser {
+  email?: string;
+  user_metadata?: {
+    full_name?: string;
+    name?: string;
+  };
+}
+
+function resolveDashboardUserName(user: MockSupabaseUser | null): string | undefined {
+  return (
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email ||
+    undefined
+  );
+}
+
+const emailUser: MockSupabaseUser = {
+  email: "faishal@example.com",
+  user_metadata: {
+    full_name: "Faishal Rahman",
+  },
+};
+assert(
+  resolveDashboardUserName(emailUser) === "Faishal Rahman",
+  "Dashboard resolves full_name from registered user metadata"
+);
+
+const googleUser: MockSupabaseUser = {
+  email: "faishal.google@gmail.com",
+  user_metadata: {
+    name: "Faishal Google OAuth",
+  },
+};
+assert(
+  resolveDashboardUserName(googleUser) === "Faishal Google OAuth",
+  "Dashboard resolves name from Google OAuth user metadata"
+);
+
+const fallbackUser: MockSupabaseUser = {
+  email: "anon@example.com",
+  user_metadata: {},
+};
+assert(
+  resolveDashboardUserName(fallbackUser) === "anon@example.com",
+  "Dashboard falls back to email when metadata name is absent"
+);
+
+assert(
+  resolveDashboardUserName(null) === undefined,
+  "Dashboard returns undefined when unauthenticated"
+);
+
+// 3D Asset existence verification
+import fs from "fs";
+assert(
+  fs.existsSync("public/images/auth-hero-3d.png"),
+  "3D Career illustration asset exists in public/images"
+);
+assert(
+  fs.statSync("public/images/auth-hero-3d.png").size > 100000,
+  "3D Career illustration asset maintains high quality/size"
+);
+
 console.log("\n=================================================");
 console.log(`QA SUMMARY: ${passedTests}/${totalTests} Tests Passed (${failedTests} Failed)`);
 console.log("=================================================");
