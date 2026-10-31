@@ -568,68 +568,80 @@ export interface JobSourcePerformanceItem {
 }
 
 /**
- * Muted Accent Colors Palette:
- * - Dusty Blue: #6689A8
- * - Muted Lavender: #9382B5
- * - Terracotta: #C77D67
- * - Golden Ochre: #C49A4A
- * - Deep Teal: #43877F
- * - Slate: #788493
+ * Bold Jewel Tones Palette:
+ * - Cobalt Blue: #2855D9
+ * - Amethyst Purple: #7542C8
+ * - Ruby Red: #C03958
+ * - Tangerine Orange: #E87924
+ * - Turquoise: #159E9A
+ * - Golden: #D4A017
  *
  * Plus harmonious derivative accents for additional categories:
- * - Dusty Berry: #B0657B
- * - Warm Olive: #708A58
- * - Indigo Denim: #546E8C
- * - Warm Cinnamon: #B87B42
- * - Muted Plum: #8C5875
- * - Sage Teal: #528F85
+ * - Deep Emerald: #047857
+ * - Rich Garnet: #B91C1C
+ * - Deep Sapphire: #1E40AF
+ * - Rich Magenta: #86198F
+ * - Deep Amber: #D97706
+ * - Deep Cyan: #0891B2
  */
-export const JOB_SOURCE_COLORS: Record<string, string> = {
-  linkedin: "#6689A8",             // Dusty Blue
-  jobstreet: "#9382B5",            // Muted Lavender
-  glints: "#C77D67",               // Terracotta
-  kalibrr: "#C49A4A",              // Golden Ochre
-  "website perusahaan": "#43877F",  // Deep Teal
-  "company website": "#43877F",
-  "portal karir": "#43877F",
-  "career portal": "#43877F",
-  "tidak diketahui": "#788493",    // Slate
-  "tidak dicatat": "#788493",
-  unknown: "#788493",
+export const BOLD_JEWEL_COLORS: Record<string, string> = {
+  // Primary 6 Bold Jewel Tones from specification
+  linkedin: "#2855D9",             // Cobalt Blue
+  jobstreet: "#7542C8",            // Amethyst Purple
+  glints: "#E87924",               // Tangerine Orange
+  kalibrr: "#D4A017",              // Golden
+  "website perusahaan": "#159E9A",  // Turquoise
+  "company website": "#159E9A",
+  "portal karir": "#159E9A",
+  "career portal": "#159E9A",
+  "tidak diketahui": "#C03958",    // Ruby Red
+  "tidak dicatat": "#C03958",
+  unknown: "#C03958",
 
-  // Extended Harmonious Accents
-  indeed: "#546E8C",               // Indigo Denim
-  "tech in asia": "#B87B42",       // Warm Cinnamon
-  techinasia: "#B87B42",
-  kitalulus: "#B0657B",            // Dusty Berry
-  referral: "#708A58",             // Warm Olive
-  rekomendasi: "#708A58",
-  internasional: "#546E8C",
-  lainnya: "#8C5875",              // Muted Plum
-  "lainnya (others)": "#8C5875",
+  // Extended Harmonious Accents for additional platforms
+  indeed: "#1E40AF",               // Deep Sapphire
+  "tech in asia": "#B91C1C",       // Rich Garnet
+  techinasia: "#B91C1C",
+  kitalulus: "#86198F",            // Rich Magenta
+  referral: "#047857",             // Deep Emerald
+  rekomendasi: "#047857",
+  internasional: "#1E40AF",
+  lainnya: "#9F1239",              // Deep Rose Ruby
+  "lainnya (others)": "#9F1239",
 };
 
-export const EXTENDED_MUTED_PALETTE = [
-  "#6689A8", // Dusty Blue
-  "#9382B5", // Muted Lavender
-  "#C77D67", // Terracotta
-  "#C49A4A", // Golden Ochre
-  "#43877F", // Deep Teal
-  "#788493", // Slate
-  "#B0657B", // Dusty Berry
-  "#708A58", // Warm Olive
-  "#546E8C", // Indigo Denim
-  "#B87B42", // Warm Cinnamon
-  "#8C5875", // Muted Plum
-  "#528F85", // Sage Teal
+export const JOB_SOURCE_COLORS = BOLD_JEWEL_COLORS;
+
+export const CORE_JEWEL_PALETTE = [
+  "#2855D9", // Cobalt Blue
+  "#7542C8", // Amethyst Purple
+  "#C03958", // Ruby Red
+  "#E87924", // Tangerine Orange
+  "#159E9A", // Turquoise
+  "#D4A017", // Golden
+];
+
+export const EXTENDED_JEWEL_PALETTE = [
+  "#2855D9", // Cobalt Blue
+  "#7542C8", // Amethyst Purple
+  "#C03958", // Ruby Red
+  "#E87924", // Tangerine Orange
+  "#159E9A", // Turquoise
+  "#D4A017", // Golden
+  "#047857", // Deep Emerald
+  "#B91C1C", // Rich Garnet
+  "#1E40AF", // Deep Sapphire
+  "#86198F", // Rich Magenta
+  "#D97706", // Deep Amber
+  "#0891B2", // Deep Cyan
 ];
 
 export function resolveJobSourceColor(label: string): string {
   const norm = label.toLowerCase().trim();
-  if (JOB_SOURCE_COLORS[norm]) {
-    return JOB_SOURCE_COLORS[norm];
+  if (BOLD_JEWEL_COLORS[norm]) {
+    return BOLD_JEWEL_COLORS[norm];
   }
-  for (const [key, color] of Object.entries(JOB_SOURCE_COLORS)) {
+  for (const [key, color] of Object.entries(BOLD_JEWEL_COLORS)) {
     if (norm.includes(key)) {
       return color;
     }
@@ -640,8 +652,8 @@ export function resolveJobSourceColor(label: string): string {
     hash = (hash << 5) - hash + norm.charCodeAt(i);
     hash |= 0;
   }
-  const index = Math.abs(hash) % EXTENDED_MUTED_PALETTE.length;
-  return EXTENDED_MUTED_PALETTE[index];
+  const index = Math.abs(hash) % EXTENDED_JEWEL_PALETTE.length;
+  return EXTENDED_JEWEL_PALETTE[index];
 }
 
 function normalizePlatformLabel(rawPlatform?: string | null): string {

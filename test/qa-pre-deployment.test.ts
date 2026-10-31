@@ -273,20 +273,20 @@ assert(withUnknown.totalApplications === 6, "Total applications includes unrecor
 const unknownItem = withUnknown.items.find((it) => it.label === "Tidak diketahui");
 assert(unknownItem !== undefined && unknownItem.count === 2, "Normalizes blank and 'Tidak dicatat' to 'Tidak diketahui' with count 2");
 
-// Muted Accent Color Palette Verification
+// Bold Jewel Tones Color Palette Verification
 const linkedInItem = perf.items.find((it) => it.label === "LinkedIn");
-assert(linkedInItem?.color === "#6689A8", "LinkedIn is mapped to Dusty Blue (#6689A8)");
+assert(linkedInItem?.color === "#2855D9", "LinkedIn is mapped to Cobalt Blue (#2855D9)");
 
 const glintsItem = perf.items.find((it) => it.label === "Glints");
-assert(glintsItem?.color === "#C77D67", "Glints is mapped to Terracotta (#C77D67)");
+assert(glintsItem?.color === "#E87924", "Glints is mapped to Tangerine Orange (#E87924)");
 
 const jobstreetItem = perf.items.find((it) => it.label === "JobStreet");
-assert(jobstreetItem?.color === "#9382B5", "JobStreet is mapped to Muted Lavender (#9382B5)");
+assert(jobstreetItem?.color === "#7542C8", "JobStreet is mapped to Amethyst Purple (#7542C8)");
 
 const kalibrrItem = perf.items.find((it) => it.label === "Kalibrr");
-assert(kalibrrItem?.color === "#C49A4A", "Kalibrr is mapped to Golden Ochre (#C49A4A)");
+assert(kalibrrItem?.color === "#D4A017", "Kalibrr is mapped to Golden (#D4A017)");
 
-assert(unknownItem?.color === "#788493", "Tidak diketahui is mapped to Slate (#788493)");
+assert(unknownItem?.color === "#C03958", "Tidak diketahui is mapped to Ruby Red (#C03958)");
 
 const distinctColors = new Set(perf.items.map((it) => it.color));
 assert(distinctColors.size === perf.items.length, "All Job Source categories have unique distinct colors");
