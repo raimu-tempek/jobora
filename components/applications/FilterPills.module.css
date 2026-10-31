@@ -2,7 +2,7 @@
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 2px 0 6px 0;
+  padding: 4px 0 8px 0;
 }
 
 /* Hide scrollbar while preserving scroll functionality */
@@ -16,7 +16,7 @@
 .pillList {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: max-content;
 }
 

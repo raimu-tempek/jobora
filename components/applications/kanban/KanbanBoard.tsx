@@ -240,7 +240,7 @@ export function KanbanBoard({
     <div
       className={styles.kanbanContainer}
       role="region"
-      aria-label="Kanban Pelacakan Lamaran Kerja"
+      aria-label="Job Journey Pelacakan Lamaran Kerja"
     >
       {columns.map((col) => (
         <KanbanColumn

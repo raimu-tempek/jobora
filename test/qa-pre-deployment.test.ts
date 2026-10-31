@@ -140,6 +140,7 @@ assert(testCardLong.company.length > 50 && testCardLong.position.length > 50, "L
 console.log("\n--- 6. Career Analytics Dashboard Engine ---");
 import {
   computeDashboardTopStats,
+  computeJobSourcePerformance,
   isRespondedStatus,
   isCallbackStatus,
   isClosedStatus,
@@ -230,6 +231,47 @@ const sortedTimestamps = [...testActivityTimestamps].sort(
 );
 assert(sortedTimestamps[0] === "2026-10-31T09:00:00.000Z", "Sorts latest application first");
 assert(sortedTimestamps[2] === "2026-10-28T10:00:00.000Z", "Preserves chronological order for oldest items");
+
+// Job Source Performance
+const emptyPerf = computeJobSourcePerformance([]);
+assert(emptyPerf.totalApplications === 0 && emptyPerf.items.length === 0, "Empty applications return 0 total and empty items");
+
+const perf = computeJobSourcePerformance(mockApplications);
+assert(perf.totalApplications === 4, "Job Source Performance calculates exact total of 4 applications");
+assert(perf.items.length === 4, "Job Source Performance identifies 4 distinct platforms");
+const totalSum = perf.items.reduce((acc, it) => acc + it.count, 0);
+assert(totalSum === 4, "Sum of platform counts matches totalApplications");
+
+const withUnknown = computeJobSourcePerformance([
+  ...mockApplications,
+  {
+    id: "app-5",
+    user_id: "u1",
+    company: "Unknown Corp",
+    position: "Intern",
+    type: "Internship",
+    status: "Submitted",
+    date: new Date().toISOString(),
+    platform: "",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "app-6",
+    user_id: "u1",
+    company: "Another Corp",
+    position: "Dev",
+    type: "Contract",
+    status: "Submitted",
+    date: new Date().toISOString(),
+    platform: "Tidak dicatat",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+]);
+assert(withUnknown.totalApplications === 6, "Total applications includes unrecorded sources (6 total)");
+const unknownItem = withUnknown.items.find((it) => it.label === "Tidak diketahui");
+assert(unknownItem !== undefined && unknownItem.count === 2, "Normalizes blank and 'Tidak dicatat' to 'Tidak diketahui' with count 2");
 
 // TEST SUITE 7: DIRECT EDIT MODAL & RECORD LIFECYCLE (JOB JOURNEY)
 console.log("\n--- 7. Direct Edit Modal & Record Lifecycle ---");

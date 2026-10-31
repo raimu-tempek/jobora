@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@bklitui/ui/charts": ["./components/ui/pie-chart.tsx"]
     }
   },
   "include": [

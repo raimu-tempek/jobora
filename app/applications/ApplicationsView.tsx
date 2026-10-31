@@ -494,7 +494,7 @@ export function ApplicationsView({
               <span className={`material-symbols-outlined ${styles.viewSwitchIcon}`} aria-hidden="true">
                 view_kanban
               </span>
-              <span>Kanban</span>
+              <span>Job Journey</span>
             </button>
           </div>
         </div>
@@ -561,7 +561,7 @@ export function ApplicationsView({
         )}
 
         {view === "kanban" && (
-          <section aria-label="Kanban board lamaran kerja">
+          <section aria-label="Job Journey board lamaran kerja">
             <KanbanBoard
               applications={filteredAndSortedApplications}
               onStatusChange={handleKanbanStatusChange}

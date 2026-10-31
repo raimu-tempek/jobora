@@ -29,3 +29,5 @@ export { TopStatsRow } from "./TopStatsRow";
 export { ApplicationsActivityPanel } from "./ApplicationsActivityPanel";
 export { ActivePipelinePanel } from "./ActivePipelinePanel";
 export { ClosureReasonsPanel } from "./ClosureReasonsPanel";
+export { JobSourcePerformancePanel } from "./JobSourcePerformancePanel";
+export type { JobSourcePerformancePanelProps } from "./JobSourcePerformancePanel";

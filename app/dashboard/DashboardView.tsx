@@ -9,7 +9,7 @@ import {
   TopStatsRow,
   ApplicationsActivityPanel,
   ActivePipelinePanel,
-  ClosureReasonsPanel,
+  JobSourcePerformancePanel,
 } from "@/components/dashboard";
 import {
   AddApplicationModal,
@@ -137,9 +137,9 @@ export function DashboardView({
         </section>
 
         {/* 5. Bottom 2-Column Grid: Active Pipeline Status (Left) & Closure Reasons (Right) */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6" aria-label="Status Pipeline & Penutupan">
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6" aria-label="Status Pipeline & Sumber Lowongan">
           <ActivePipelinePanel applications={applications} />
-          <ClosureReasonsPanel applications={applications} />
+          <JobSourcePerformancePanel applications={applications} />
         </section>
 
         {/* 6. Recent Applications Table */}

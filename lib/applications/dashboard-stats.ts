@@ -558,3 +558,123 @@ export function computeClosureReasons(applications: Application[]): {
 
   return { items, totalClosed };
 }
+
+export interface JobSourcePerformanceItem {
+  key: string;
+  label: string;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
+const KNOWN_PLATFORM_COLORS: Record<string, string> = {
+  linkedin: "#0a66c2",
+  glints: "#f97316",
+  jobstreet: "#8b5cf6",
+  kalibrr: "#10b981",
+  "website perusahaan": "#107c74",
+  "portal karir": "#0d9488",
+  "career portal": "#0d9488",
+  indeed: "#06b6d4",
+  internasional: "#6366f1",
+  referral: "#ec4899",
+  "tidak diketahui": "#94a3b8",
+};
+
+const FALLBACK_PLATFORM_COLORS = [
+  "#107c74",
+  "#3b82f6",
+  "#f59e0b",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#6366f1",
+  "#84cc16",
+  "#f43f5e",
+];
+
+function normalizePlatformLabel(rawPlatform?: string | null): string {
+  if (!rawPlatform) return "Tidak diketahui";
+  const trimmed = rawPlatform.trim();
+  if (trimmed.length === 0) return "Tidak diketahui";
+
+  const lower = trimmed.toLowerCase();
+  if (
+    lower === "tidak dicatat" ||
+    lower === "unknown" ||
+    lower === "tidak diketahui" ||
+    lower === "-" ||
+    lower === "n/a"
+  ) {
+    return "Tidak diketahui";
+  }
+  if (lower === "linkedin") return "LinkedIn";
+  if (lower === "jobstreet") return "JobStreet";
+  if (lower === "glints") return "Glints";
+  if (lower === "kalibrr") return "Kalibrr";
+  if (lower === "website perusahaan" || lower === "company website") {
+    return "Website Perusahaan";
+  }
+
+  return trimmed;
+}
+
+/**
+ * Computes Job Source Performance breakdown:
+ * - Aggregates actual applications by the `platform` field.
+ * - Missing or empty platforms are categorized as "Tidak diketahui".
+ * - Sorts by count descending (tie-break alphabetically, "Tidak diketahui" last).
+ */
+export function computeJobSourcePerformance(applications: Application[]): {
+  items: JobSourcePerformanceItem[];
+  totalApplications: number;
+} {
+  const totalApplications = applications.length;
+  if (totalApplications === 0) {
+    return { items: [], totalApplications: 0 };
+  }
+
+  const counts: Record<string, number> = {};
+
+  for (const app of applications) {
+    const label = normalizePlatformLabel(app.platform);
+    counts[label] = (counts[label] || 0) + 1;
+  }
+
+  const sortedLabels = Object.keys(counts).sort((a, b) => {
+    if (a === "Tidak diketahui" && b !== "Tidak diketahui") return 1;
+    if (b === "Tidak diketahui" && a !== "Tidak diketahui") return -1;
+    const diff = counts[b] - counts[a];
+    if (diff !== 0) return diff;
+    return a.localeCompare(b);
+  });
+
+  let fallbackColorIndex = 0;
+  const items: JobSourcePerformanceItem[] = sortedLabels.map((label) => {
+    const count = counts[label];
+    const percentage =
+      totalApplications > 0
+        ? Math.round((count / totalApplications) * 100)
+        : 0;
+
+    const lower = label.toLowerCase();
+    let color = KNOWN_PLATFORM_COLORS[lower];
+    if (!color) {
+      color =
+        FALLBACK_PLATFORM_COLORS[
+          fallbackColorIndex % FALLBACK_PLATFORM_COLORS.length
+        ];
+      fallbackColorIndex++;
+    }
+
+    return {
+      key: label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      label,
+      count,
+      percentage,
+      color,
+    };
+  });
+
+  return { items, totalApplications };
+}
