@@ -568,80 +568,80 @@ export interface JobSourcePerformanceItem {
 }
 
 /**
- * Bold Jewel Tones Palette:
- * - Cobalt Blue: #2855D9
- * - Amethyst Purple: #7542C8
- * - Ruby Red: #C03958
- * - Tangerine Orange: #E87924
- * - Turquoise: #159E9A
- * - Golden: #D4A017
+ * Tonal Green Palette (Harmonious with Jobora Brand Identity):
+ * - Signature Jobora Teal: #107C74
+ * - Vivid Emerald Green: #059669
+ * - Fresh Spring Green: #16A34A
+ * - Warm Olive Leaf: #4D7C0F
+ * - Crisp Jade: #14B8A6
+ * - Deep Hunter Green: #14532D
  *
- * Plus harmonious derivative accents for additional categories:
- * - Deep Emerald: #047857
- * - Rich Garnet: #B91C1C
- * - Deep Sapphire: #1E40AF
- * - Rich Magenta: #86198F
- * - Deep Amber: #D97706
- * - Deep Cyan: #0891B2
+ * Plus extended harmonious green shades for additional categories:
+ * - Dark Sea Green: #0D9488
+ * - Dark Emerald: #065F46
+ * - Deep Moss: #3F6212
+ * - Forest Green: #15803D
+ * - Vivid Mint: #22C55E
+ * - Deep Pine Spruce: #1E3A2F
  */
-export const BOLD_JEWEL_COLORS: Record<string, string> = {
-  // Primary 6 Bold Jewel Tones from specification
-  linkedin: "#2855D9",             // Cobalt Blue
-  jobstreet: "#7542C8",            // Amethyst Purple
-  glints: "#E87924",               // Tangerine Orange
-  kalibrr: "#D4A017",              // Golden
-  "website perusahaan": "#159E9A",  // Turquoise
-  "company website": "#159E9A",
-  "portal karir": "#159E9A",
-  "career portal": "#159E9A",
-  "tidak diketahui": "#C03958",    // Ruby Red
-  "tidak dicatat": "#C03958",
-  unknown: "#C03958",
+export const GREEN_TONAL_COLORS: Record<string, string> = {
+  // Primary 6 Green Tonal Shades
+  linkedin: "#107C74",             // Signature Jobora Teal
+  jobstreet: "#059669",            // Vivid Emerald Green
+  glints: "#16A34A",               // Fresh Spring Green
+  kalibrr: "#4D7C0F",              // Warm Olive Leaf
+  "website perusahaan": "#14B8A6",  // Crisp Jade
+  "company website": "#14B8A6",
+  "portal karir": "#14B8A6",
+  "career portal": "#14B8A6",
+  "tidak diketahui": "#14532D",    // Deep Hunter Green
+  "tidak dicatat": "#14532D",
+  unknown: "#14532D",
 
-  // Extended Harmonious Accents for additional platforms
-  indeed: "#1E40AF",               // Deep Sapphire
-  "tech in asia": "#B91C1C",       // Rich Garnet
-  techinasia: "#B91C1C",
-  kitalulus: "#86198F",            // Rich Magenta
-  referral: "#047857",             // Deep Emerald
-  rekomendasi: "#047857",
-  internasional: "#1E40AF",
-  lainnya: "#9F1239",              // Deep Rose Ruby
-  "lainnya (others)": "#9F1239",
+  // Extended Harmonious Green Accents
+  indeed: "#065F46",               // Dark Emerald
+  "tech in asia": "#3F6212",       // Deep Moss
+  techinasia: "#3F6212",
+  kitalulus: "#15803D",            // Forest Green
+  referral: "#0D9488",             // Dark Sea Green
+  rekomendasi: "#0D9488",
+  internasional: "#065F46",
+  lainnya: "#1E3A2F",              // Deep Pine Spruce
+  "lainnya (others)": "#1E3A2F",
 };
 
-export const JOB_SOURCE_COLORS = BOLD_JEWEL_COLORS;
+export const JOB_SOURCE_COLORS = GREEN_TONAL_COLORS;
 
-export const CORE_JEWEL_PALETTE = [
-  "#2855D9", // Cobalt Blue
-  "#7542C8", // Amethyst Purple
-  "#C03958", // Ruby Red
-  "#E87924", // Tangerine Orange
-  "#159E9A", // Turquoise
-  "#D4A017", // Golden
+export const CORE_GREEN_PALETTE = [
+  "#107C74", // Signature Jobora Teal
+  "#059669", // Vivid Emerald Green
+  "#16A34A", // Fresh Spring Green
+  "#4D7C0F", // Warm Olive Leaf
+  "#14B8A6", // Crisp Jade
+  "#14532D", // Deep Hunter Green
 ];
 
-export const EXTENDED_JEWEL_PALETTE = [
-  "#2855D9", // Cobalt Blue
-  "#7542C8", // Amethyst Purple
-  "#C03958", // Ruby Red
-  "#E87924", // Tangerine Orange
-  "#159E9A", // Turquoise
-  "#D4A017", // Golden
-  "#047857", // Deep Emerald
-  "#B91C1C", // Rich Garnet
-  "#1E40AF", // Deep Sapphire
-  "#86198F", // Rich Magenta
-  "#D97706", // Deep Amber
-  "#0891B2", // Deep Cyan
+export const EXTENDED_GREEN_PALETTE = [
+  "#107C74", // Signature Jobora Teal
+  "#059669", // Vivid Emerald Green
+  "#16A34A", // Fresh Spring Green
+  "#4D7C0F", // Warm Olive Leaf
+  "#14B8A6", // Crisp Jade
+  "#14532D", // Deep Hunter Green
+  "#0D9488", // Dark Sea Green
+  "#065F46", // Dark Emerald
+  "#3F6212", // Deep Moss
+  "#15803D", // Forest Green
+  "#22C55E", // Vivid Mint
+  "#1E3A2F", // Deep Pine Spruce
 ];
 
 export function resolveJobSourceColor(label: string): string {
   const norm = label.toLowerCase().trim();
-  if (BOLD_JEWEL_COLORS[norm]) {
-    return BOLD_JEWEL_COLORS[norm];
+  if (GREEN_TONAL_COLORS[norm]) {
+    return GREEN_TONAL_COLORS[norm];
   }
-  for (const [key, color] of Object.entries(BOLD_JEWEL_COLORS)) {
+  for (const [key, color] of Object.entries(GREEN_TONAL_COLORS)) {
     if (norm.includes(key)) {
       return color;
     }
@@ -652,8 +652,8 @@ export function resolveJobSourceColor(label: string): string {
     hash = (hash << 5) - hash + norm.charCodeAt(i);
     hash |= 0;
   }
-  const index = Math.abs(hash) % EXTENDED_JEWEL_PALETTE.length;
-  return EXTENDED_JEWEL_PALETTE[index];
+  const index = Math.abs(hash) % EXTENDED_GREEN_PALETTE.length;
+  return EXTENDED_GREEN_PALETTE[index];
 }
 
 function normalizePlatformLabel(rawPlatform?: string | null): string {

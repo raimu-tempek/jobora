@@ -102,7 +102,7 @@ export function JobSourcePerformancePanel({
                     <div className="text-center select-none pointer-events-none px-2">
                       <div
                         className="font-bold text-2xl font-heading transition-colors"
-                        style={{ color: isHovered && data?.color ? data.color : "#111827" }}
+                        style={{ color: isHovered && data?.color ? data.color : "#107c74" }}
                       >
                         {value.toLocaleString()}
                       </div>
@@ -124,7 +124,7 @@ export function JobSourcePerformancePanel({
                   onMouseLeave={() => setHoveredIndex(null)}
                   className={`px-3 py-2 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-[13px] ${
                     hoveredIndex === idx
-                      ? "bg-gray-50 border-gray-300 shadow-2xs"
+                      ? "bg-[#e6faf7] border-[#107c74]/40 shadow-2xs"
                       : "bg-white border-gray-100 hover:border-gray-200 text-gray-800"
                   }`}
                 >
