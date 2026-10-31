@@ -46,11 +46,13 @@ export function ActivePipelinePanel({
 
         {/* Stages List with Horizontal Progress Bars */}
         {totalActive === 0 ? (
-          <div className="py-12 text-center text-xs text-gray-400">
-            <Layers size={36} className="mx-auto text-gray-300 mb-2" />
-            <p className="font-semibold text-gray-600">Tidak ada lamaran aktif saat ini</p>
-            <p className="text-xs text-gray-400 mt-1">
-              Tambah lamaran baru untuk mulai melacak pipeline rekrutmen Anda.
+          <div className="py-10 text-center flex flex-col items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-[#e6faf7] flex items-center justify-center mb-3">
+              <Layers size={22} className="text-[#107c74]" />
+            </div>
+            <p className="text-sm font-bold text-gray-800 font-heading">Tidak Ada Lamaran Aktif</p>
+            <p className="text-xs text-gray-500 mt-1 max-w-xs leading-relaxed">
+              Semua lamaran Anda telah selesai atau belum dimulai. Tambah lamaran baru untuk mengisi pipeline seleksi.
             </p>
           </div>
         ) : (

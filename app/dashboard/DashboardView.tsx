@@ -7,6 +7,7 @@ import {
   FollowUpReminderBanner,
   RecentApplicationsTable,
   TopStatsRow,
+  CareerMomentumSignature,
   ApplicationsActivityPanel,
   ActivePipelinePanel,
   ClosureReasonsPanel,
@@ -126,20 +127,27 @@ export function DashboardView({
         {/* 2. Follow-Up Reminder Banner */}
         <FollowUpReminderBanner count={followUpCount} />
 
-        {/* 3. 6 KPI Cards in 1 Row on Desktop */}
+        {/* 3. Visual Signature: Jobora Career Momentum Pipeline Velocity */}
+        <CareerMomentumSignature applications={applications} userName={displayName} />
+
+        {/* 4. Asymmetric Bento Grid: Primary & Secondary Career KPIs */}
         <section aria-label="Statistik Utama Karier">
           <TopStatsRow stats={topStats} />
         </section>
 
-        {/* 4. Full-Width Applications & Response Activity Panel (Bklit UI / Multi-series Chart) */}
+        {/* 5. Full-Width Applications & Response Activity Panel (Bklit UI / Multi-series Chart) */}
         <section aria-label="Aktivitas Lamaran & Respons">
           <ApplicationsActivityPanel applications={applications} />
         </section>
 
-        {/* 5. Bottom 2-Column Grid: Active Pipeline Status (Left) & Closure Reasons (Right) */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6" aria-label="Status Pipeline & Penutupan">
-          <ActivePipelinePanel applications={applications} />
-          <ClosureReasonsPanel applications={applications} />
+        {/* 6. Asymmetrical Bottom Grid: Active Pipeline Status (7 cols) & Closure Reasons (5 cols) */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6" aria-label="Status Pipeline & Penutupan">
+          <div className="lg:col-span-7">
+            <ActivePipelinePanel applications={applications} />
+          </div>
+          <div className="lg:col-span-5">
+            <ClosureReasonsPanel applications={applications} />
+          </div>
         </section>
 
         {/* 6. Recent Applications Table */}

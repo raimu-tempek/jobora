@@ -1,0 +1,185 @@
+.statsBentoGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 640px) {
+  .statsBentoGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .statsBentoGrid {
+    grid-template-columns: repeat(12, 1fr);
+  }
+}
+
+/* Base Card Style */
+.bentoCard {
+  background: #ffffff;
+  border: 1px solid var(--color-border, #e2eaf0);
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  min-width: 0;
+}
+
+.bentoCard:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+/* 1. Hero Anchor Metric (Span 4 of 12) */
+.heroCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f7fcfa 100%);
+  border-color: rgba(16, 124, 116, 0.25);
+  box-shadow: 0 2px 10px rgba(16, 124, 116, 0.05);
+}
+
+@media (min-width: 1024px) {
+  .heroCard {
+    grid-column: span 4;
+  }
+}
+
+.heroLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary, #107c74);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.heroValue {
+  font-family: var(--font-heading, "Manrope", sans-serif);
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--color-text, #132a30);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin: 4px 0 6px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.heroSubtext {
+  font-size: 12.5px;
+  color: var(--color-text-secondary, #526970);
+  margin-top: 2px;
+}
+
+/* 2. Rate Cards: Response & Interview (Span 3 of 12 each) */
+.rateCard {
+  background: #ffffff;
+}
+
+@media (min-width: 1024px) {
+  .rateCard {
+    grid-column: span 3;
+  }
+}
+
+.cardLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #627d84);
+  margin-bottom: 4px;
+}
+
+.cardValue {
+  font-family: var(--font-heading, "Manrope", sans-serif);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--color-text, #132a30);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 2px 0 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardSubtext {
+  font-size: 12px;
+  color: var(--color-text-muted, #627d84);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 3. Offer Card: Celebratory Highlight (Span 2 of 12) */
+.offerCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border-color: rgba(16, 185, 129, 0.28);
+}
+
+@media (min-width: 1024px) {
+  .offerCard {
+    grid-column: span 2;
+  }
+}
+
+.offerValue {
+  font-family: var(--font-heading, "Manrope", sans-serif);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--color-success, #10b981);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 2px 0 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 4. Activity & Volume Card (Span 3 of 12 or Span 2 of 12) */
+.activityCard {
+  background: #ffffff;
+}
+
+@media (min-width: 1024px) {
+  .activityCard {
+    grid-column: span 3;
+  }
+}
+
+.dualMetricRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.metricBlock {
+  flex: 1;
+}
+
+.metricDivider {
+  width: 1px;
+  height: 38px;
+  background: #f1f5f9;
+}
+
+.sparklineContainer {
+  height: 28px;
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bentoCard {
+    transition: none;
+  }
+}
