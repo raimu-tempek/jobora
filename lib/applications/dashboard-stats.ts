@@ -568,80 +568,81 @@ export interface JobSourcePerformanceItem {
 }
 
 /**
- * Tonal Green Palette (Harmonious with Jobora Brand Identity):
- * - Signature Jobora Teal: #107C74
- * - Vivid Emerald Green: #059669
- * - Fresh Spring Green: #16A34A
- * - Warm Olive Leaf: #4D7C0F
- * - Crisp Jade: #14B8A6
- * - Deep Hunter Green: #14532D
+ * Fresh Emerald Palette:
+ * - Emerald: #10B981
+ * - Jade: #34A875
+ * - Spring Green: #65C98A
+ * - Mint Green: #8ED9A8
+ * - Lime Green: #A3C94A
+ * - Pistachio: #C0DDA0
  *
- * Plus extended harmonious green shades for additional categories:
- * - Dark Sea Green: #0D9488
- * - Dark Emerald: #065F46
- * - Deep Moss: #3F6212
- * - Forest Green: #15803D
- * - Vivid Mint: #22C55E
- * - Deep Pine Spruce: #1E3A2F
+ * Plus extended fresh, clean green shades for additional categories:
+ * - Bright Apple Green: #22C55E
+ * - Crisp Seafoam: #14B8A6
+ * - Vibrant Chartreuse: #84CC16
+ * - Soft Jade: #4ADE80
+ * - Crisp Leaf: #48BB78
+ * - Bright Celadon: #A7F3D0
  */
-export const GREEN_TONAL_COLORS: Record<string, string> = {
-  // Primary 6 Green Tonal Shades
-  linkedin: "#107C74",             // Signature Jobora Teal
-  jobstreet: "#059669",            // Vivid Emerald Green
-  glints: "#16A34A",               // Fresh Spring Green
-  kalibrr: "#4D7C0F",              // Warm Olive Leaf
-  "website perusahaan": "#14B8A6",  // Crisp Jade
-  "company website": "#14B8A6",
-  "portal karir": "#14B8A6",
-  "career portal": "#14B8A6",
-  "tidak diketahui": "#14532D",    // Deep Hunter Green
-  "tidak dicatat": "#14532D",
-  unknown: "#14532D",
+export const FRESH_EMERALD_COLORS: Record<string, string> = {
+  // Primary 6 Fresh Emerald Shades
+  linkedin: "#10B981",             // Emerald (vibrant, fresh primary)
+  jobstreet: "#34A875",            // Jade (rich, clean jade)
+  glints: "#65C98A",               // Spring Green (bright, lively spring green)
+  kalibrr: "#A3C94A",              // Lime Green (zesty, fresh yellow-green)
+  "website perusahaan": "#8ED9A8",  // Mint Green (clean, luminous mint)
+  "company website": "#8ED9A8",
+  "portal karir": "#8ED9A8",
+  "career portal": "#8ED9A8",
+  "tidak diketahui": "#C0DDA0",    // Pistachio (soft, clean pistachio)
+  "tidak dicatat": "#C0DDA0",
+  unknown: "#C0DDA0",
 
-  // Extended Harmonious Green Accents
-  indeed: "#065F46",               // Dark Emerald
-  "tech in asia": "#3F6212",       // Deep Moss
-  techinasia: "#3F6212",
-  kitalulus: "#15803D",            // Forest Green
-  referral: "#0D9488",             // Dark Sea Green
-  rekomendasi: "#0D9488",
-  internasional: "#065F46",
-  lainnya: "#1E3A2F",              // Deep Pine Spruce
-  "lainnya (others)": "#1E3A2F",
+  // Extended Fresh Harmonious Accents
+  indeed: "#22C55E",               // Bright Apple Green
+  "tech in asia": "#84CC16",       // Vibrant Chartreuse
+  techinasia: "#84CC16",
+  kitalulus: "#4ADE80",            // Soft Jade
+  referral: "#14B8A6",             // Crisp Seafoam
+  rekomendasi: "#14B8A6",
+  internasional: "#22C55E",
+  lainnya: "#48BB78",              // Crisp Leaf
+  "lainnya (others)": "#48BB78",
 };
 
-export const JOB_SOURCE_COLORS = GREEN_TONAL_COLORS;
+export const JOB_SOURCE_COLORS = FRESH_EMERALD_COLORS;
+export const GREEN_TONAL_COLORS = FRESH_EMERALD_COLORS;
 
-export const CORE_GREEN_PALETTE = [
-  "#107C74", // Signature Jobora Teal
-  "#059669", // Vivid Emerald Green
-  "#16A34A", // Fresh Spring Green
-  "#4D7C0F", // Warm Olive Leaf
-  "#14B8A6", // Crisp Jade
-  "#14532D", // Deep Hunter Green
+export const CORE_FRESH_EMERALD_PALETTE = [
+  "#10B981", // Emerald
+  "#34A875", // Jade
+  "#65C98A", // Spring Green
+  "#8ED9A8", // Mint Green
+  "#A3C94A", // Lime Green
+  "#C0DDA0", // Pistachio
 ];
 
-export const EXTENDED_GREEN_PALETTE = [
-  "#107C74", // Signature Jobora Teal
-  "#059669", // Vivid Emerald Green
-  "#16A34A", // Fresh Spring Green
-  "#4D7C0F", // Warm Olive Leaf
-  "#14B8A6", // Crisp Jade
-  "#14532D", // Deep Hunter Green
-  "#0D9488", // Dark Sea Green
-  "#065F46", // Dark Emerald
-  "#3F6212", // Deep Moss
-  "#15803D", // Forest Green
-  "#22C55E", // Vivid Mint
-  "#1E3A2F", // Deep Pine Spruce
+export const EXTENDED_FRESH_EMERALD_PALETTE = [
+  "#10B981", // Emerald
+  "#34A875", // Jade
+  "#65C98A", // Spring Green
+  "#8ED9A8", // Mint Green
+  "#A3C94A", // Lime Green
+  "#C0DDA0", // Pistachio
+  "#22C55E", // Bright Apple Green
+  "#14B8A6", // Crisp Seafoam
+  "#84CC16", // Vibrant Chartreuse
+  "#4ADE80", // Soft Jade
+  "#48BB78", // Crisp Leaf
+  "#A7F3D0", // Bright Celadon
 ];
 
 export function resolveJobSourceColor(label: string): string {
   const norm = label.toLowerCase().trim();
-  if (GREEN_TONAL_COLORS[norm]) {
-    return GREEN_TONAL_COLORS[norm];
+  if (FRESH_EMERALD_COLORS[norm]) {
+    return FRESH_EMERALD_COLORS[norm];
   }
-  for (const [key, color] of Object.entries(GREEN_TONAL_COLORS)) {
+  for (const [key, color] of Object.entries(FRESH_EMERALD_COLORS)) {
     if (norm.includes(key)) {
       return color;
     }
@@ -652,8 +653,8 @@ export function resolveJobSourceColor(label: string): string {
     hash = (hash << 5) - hash + norm.charCodeAt(i);
     hash |= 0;
   }
-  const index = Math.abs(hash) % EXTENDED_GREEN_PALETTE.length;
-  return EXTENDED_GREEN_PALETTE[index];
+  const index = Math.abs(hash) % EXTENDED_FRESH_EMERALD_PALETTE.length;
+  return EXTENDED_FRESH_EMERALD_PALETTE[index];
 }
 
 function normalizePlatformLabel(rawPlatform?: string | null): string {

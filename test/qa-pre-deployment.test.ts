@@ -273,23 +273,23 @@ assert(withUnknown.totalApplications === 6, "Total applications includes unrecor
 const unknownItem = withUnknown.items.find((it) => it.label === "Tidak diketahui");
 assert(unknownItem !== undefined && unknownItem.count === 2, "Normalizes blank and 'Tidak dicatat' to 'Tidak diketahui' with count 2");
 
-// Tonal Green Color Palette Verification (Harmonious with Jobora Brand Identity)
+// Fresh Emerald Color Palette Verification
 const linkedInItem = perf.items.find((it) => it.label === "LinkedIn");
-assert(linkedInItem?.color === "#107C74", "LinkedIn is mapped to Signature Jobora Teal (#107C74)");
+assert(linkedInItem?.color === "#10B981", "LinkedIn is mapped to Emerald (#10B981)");
 
 const glintsItem = perf.items.find((it) => it.label === "Glints");
-assert(glintsItem?.color === "#16A34A", "Glints is mapped to Fresh Spring Green (#16A34A)");
+assert(glintsItem?.color === "#65C98A", "Glints is mapped to Spring Green (#65C98A)");
 
 const jobstreetItem = perf.items.find((it) => it.label === "JobStreet");
-assert(jobstreetItem?.color === "#059669", "JobStreet is mapped to Vivid Emerald Green (#059669)");
+assert(jobstreetItem?.color === "#34A875", "JobStreet is mapped to Jade (#34A875)");
 
 const kalibrrItem = perf.items.find((it) => it.label === "Kalibrr");
-assert(kalibrrItem?.color === "#4D7C0F", "Kalibrr is mapped to Warm Olive Leaf (#4D7C0F)");
+assert(kalibrrItem?.color === "#A3C94A", "Kalibrr is mapped to Lime Green (#A3C94A)");
 
-assert(unknownItem?.color === "#14532D", "Tidak diketahui is mapped to Deep Hunter Green (#14532D)");
+assert(unknownItem?.color === "#C0DDA0", "Tidak diketahui is mapped to Pistachio (#C0DDA0)");
 
 const distinctColors = new Set(perf.items.map((it) => it.color));
-assert(distinctColors.size === perf.items.length, "All Job Source categories have unique distinct green shades");
+assert(distinctColors.size === perf.items.length, "All Job Source categories have unique distinct fresh green shades");
 
 // TEST SUITE 7: DIRECT EDIT MODAL & RECORD LIFECYCLE (JOB JOURNEY)
 console.log("\n--- 7. Direct Edit Modal & Record Lifecycle ---");
