@@ -87,6 +87,15 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       });
 
       if (!res.success) {
+        if (res.errorDetails) {
+          console.error("Feedback submission failed with details:", {
+            message: res.errorDetails.message,
+            code: res.errorDetails.code,
+            details: res.errorDetails.details,
+            hint: res.errorDetails.hint,
+            status: res.errorDetails.status,
+          });
+        }
         // PERATURAN UX: Jika gagal, tampilkan pesan error yang jelas dan JANGAN MENGHAPUS isi pesan.
         setErrorMessage(
           res.error ||

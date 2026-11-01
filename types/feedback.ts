@@ -16,4 +16,11 @@ export interface FeedbackRecord {
 export interface FeedbackSubmissionResult {
   success: boolean;
   error?: string;
+  errorDetails?: {
+    message?: string;
+    code?: string;
+    details?: string | null;
+    hint?: string | null;
+    status?: number;
+  };
 }

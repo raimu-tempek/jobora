@@ -61,15 +61,15 @@ export async function submitFeedback(
   try {
     const supabase = createClient();
 
-    // 1. Ambil user yang sedang login dari session Supabase
+    // 1. Ambil user yang sedang login dari session / auth Supabase
     let userId: string | null = null;
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session?.user?.id) {
-      userId = sessionData.session.user.id;
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userData?.user?.id) {
+      userId = userData.user.id;
     } else {
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData?.user?.id) {
-        userId = userData.user.id;
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.user?.id) {
+        userId = sessionData.session.user.id;
       }
     }
 
@@ -81,20 +81,43 @@ export async function submitFeedback(
       };
     }
 
-    // 2. Insert ke tabel public.feedback
-    const { error: insertError } = await supabase.from("feedback").insert({
+    // 2. Insert ke tabel public.feedback sesuai struktur tabel: user_id, category, message
+    const payload = {
       user_id: userId,
       category: input.category,
       message: input.message.trim(),
-    });
+    };
+
+    const response = await supabase.from("feedback").insert(payload);
+    const insertError = response.error;
+    const status = response.status;
 
     if (insertError) {
-      console.error("Supabase feedback insert error:", insertError);
+      const errorDetails = {
+        message: insertError.message,
+        code: insertError.code,
+        details: insertError.details,
+        hint: insertError.hint,
+        status: status,
+      };
+
+      console.error("Supabase feedback insert error:", errorDetails);
+
+      let userFacingError = insertError.message || "Gagal menyimpan feedback ke database.";
+      if (
+        insertError.code === "42501" ||
+        insertError.message?.toLowerCase().includes("permission denied")
+      ) {
+        userFacingError = `Izin akses ditolak database (Kode: ${insertError.code}). ${
+          insertError.hint ||
+          "Tabel feedback membutuhkan izin INSERT untuk role authenticated di Supabase."
+        }`;
+      }
+
       return {
         success: false,
-        error:
-          insertError.message ||
-          "Gagal menyimpan feedback ke database. Silakan coba kembali.",
+        error: userFacingError,
+        errorDetails,
       };
     }
 
