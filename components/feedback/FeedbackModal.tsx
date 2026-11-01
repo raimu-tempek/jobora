@@ -88,6 +88,17 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
       if (!res.success) {
         if (res.errorDetails) {
+          console.log("Modal error type:", typeof res.errorDetails);
+          console.log("Modal error message:", res.errorDetails?.message);
+          console.log("Modal error code:", res.errorDetails?.code);
+          console.log("Modal error details:", res.errorDetails?.details);
+          console.log("Modal error hint:", res.errorDetails?.hint);
+          console.log("Modal error status:", res.errorDetails?.status);
+          console.log(
+            "Modal error serialized:",
+            JSON.stringify(res.errorDetails)
+          );
+
           console.error("Feedback submission failed with details:", {
             message: res.errorDetails.message,
             code: res.errorDetails.code,

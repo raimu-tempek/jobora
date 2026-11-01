@@ -93,6 +93,21 @@ export async function submitFeedback(
     const status = response.status;
 
     if (insertError) {
+      console.log("Feedback error type:", typeof insertError);
+      console.log("Feedback error constructor:", insertError?.constructor?.name);
+      console.log("Feedback error message:", insertError?.message);
+      console.log("Feedback error code:", insertError?.code);
+      console.log("Feedback error details:", insertError?.details);
+      console.log("Feedback error hint:", insertError?.hint);
+      console.log("Feedback error status:", (insertError as any)?.status ?? status);
+      console.log(
+        "Feedback error serialized:",
+        JSON.stringify(
+          insertError,
+          Object.getOwnPropertyNames(insertError ?? {})
+        )
+      );
+
       const errorDetails = {
         message: insertError.message,
         code: insertError.code,
