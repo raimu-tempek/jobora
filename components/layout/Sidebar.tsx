@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut } from "@/lib/auth/actions";
@@ -94,8 +95,15 @@ export function Sidebar({
     <aside className={styles.sidebar} aria-label="Main Navigation">
       <div className={styles.topSection}>
         <div className={styles.header}>
-          <Link href="/dashboard" className={styles.wordmark}>
-            Jobora
+          <Link href="/dashboard" className={styles.brandLink} aria-label="Jobora Home">
+            <Image
+              src="/images/jobora-logo.svg"
+              alt="Jobora"
+              width={167}
+              height={42}
+              priority
+              className={styles.brandLogo}
+            />
           </Link>
         </div>
 

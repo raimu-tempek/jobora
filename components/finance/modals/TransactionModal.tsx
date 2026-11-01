@@ -120,10 +120,12 @@ export function TransactionModal({
   // Helper to reset Scan Tab state
   const resetScanState = useCallback(() => {
     setFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
+    setPreviewUrl((prev) => {
+      if (prev && prev.startsWith("blob:")) {
+        URL.revokeObjectURL(prev);
+      }
+      return null;
+    });
     setIsProcessing(false);
     setOcrError(null);
     setClipboardFeedback(null);
@@ -148,7 +150,7 @@ export function TransactionModal({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  }, [previewUrl, categories, accounts]);
+  }, [categories, accounts]);
 
   // Helper to reset Manual Tab state
   const resetManualState = useCallback(() => {
@@ -196,8 +198,14 @@ export function TransactionModal({
   };
 
   // Sync on modal open or initialData change
+  const prevIsOpenRef = useRef(false);
+  const prevInitialDataRef = useRef(initialData);
+
   useEffect(() => {
-    if (isOpen) {
+    if (
+      isOpen &&
+      (!prevIsOpenRef.current || initialData !== prevInitialDataRef.current)
+    ) {
       if (initialData) {
         setActiveTab("manual");
         resetManualState();
@@ -207,6 +215,8 @@ export function TransactionModal({
         resetScanState();
       }
     }
+    prevIsOpenRef.current = isOpen;
+    prevInitialDataRef.current = initialData;
   }, [isOpen, initialData, initialTab, resetManualState, resetScanState]);
 
   // Check duplicate for manual entry
@@ -217,22 +227,33 @@ export function TransactionModal({
     }
     const num = Math.round(Number(amount));
     if (num > 0) {
-      const dup = checkForDuplicateTransaction(
+      let isMounted = true;
+      checkForDuplicateTransaction(
         userId,
         num,
         date,
         accountId,
         initialData?.id
-      );
-      if (dup) {
-        setManualDuplicateWarning(
-          `Peringatan duplikasi: Ditemukan transaksi "${dup.title}" dengan nominal ${formatIDR(
-            dup.amount
-          )} pada akun dan tanggal yang sama.`
-        );
-      } else {
-        setManualDuplicateWarning(null);
-      }
+      )
+        .then((dup) => {
+          if (!isMounted) return;
+          if (dup) {
+            setManualDuplicateWarning(
+              `Peringatan duplikasi: Ditemukan transaksi "${dup.title}" dengan nominal ${formatIDR(
+                dup.amount
+              )} pada akun dan tanggal yang sama.`
+            );
+          } else {
+            setManualDuplicateWarning(null);
+          }
+        })
+        .catch(() => {
+          if (isMounted) setManualDuplicateWarning(null);
+        });
+
+      return () => {
+        isMounted = false;
+      };
     }
   }, [amount, date, accountId, userId, initialData]);
 
@@ -244,30 +265,89 @@ export function TransactionModal({
     }
     const num = Math.round(Number(scanAmount));
     if (num > 0) {
-      const dup = checkForDuplicateTransaction(
+      let isMounted = true;
+      checkForDuplicateTransaction(
         userId,
         num,
         scanDate,
         scanAccountId,
         initialData?.id
-      );
-      if (dup) {
-        setScanDuplicateWarning(
-          `Peringatan: Ditemukan transaksi mirip "${dup.title}" (${formatIDR(
-            dup.amount
-          )}) pada tanggal ${dup.date}.`
-        );
-      } else {
-        setScanDuplicateWarning(null);
-      }
+      )
+        .then((dup) => {
+          if (!isMounted) return;
+          if (dup) {
+            setScanDuplicateWarning(
+              `Peringatan: Ditemukan transaksi mirip "${dup.title}" (${formatIDR(
+                dup.amount
+              )}) pada tanggal ${dup.date}.`
+            );
+          } else {
+            setScanDuplicateWarning(null);
+          }
+        })
+        .catch(() => {
+          if (isMounted) setScanDuplicateWarning(null);
+        });
+
+      return () => {
+        isMounted = false;
+      };
     }
   }, [scanAmount, scanDate, scanAccountId, userId, initialData]);
+
+  // Helper to determine if an element is a real editable text input
+  const isEditableTextInput = (el: HTMLElement | null): boolean => {
+    if (!el) return false;
+    if (el.isContentEditable) return true;
+    if (el.tagName === "TEXTAREA") return true;
+    if (el.tagName === "INPUT") {
+      const input = el as HTMLInputElement;
+      const nonTextTypes = [
+        "file",
+        "checkbox",
+        "radio",
+        "button",
+        "submit",
+        "reset",
+        "image",
+        "range",
+        "color",
+      ];
+      return !nonTextTypes.includes((input.type || "text").toLowerCase());
+    }
+    return false;
+  };
+
+  // Helper to check if clipboard contains an image
+  const hasImageInClipboard = (dt: DataTransfer | null): boolean => {
+    if (!dt) return false;
+    if (dt.items && dt.items.length > 0) {
+      for (let i = 0; i < dt.items.length; i++) {
+        if (dt.items[i].type.startsWith("image/")) return true;
+      }
+    }
+    if (dt.files && dt.files.length > 0) {
+      for (let i = 0; i < dt.files.length; i++) {
+        if (
+          dt.files[i].type.startsWith("image/") ||
+          /\.(jpe?g|png|webp)$/i.test(dt.files[i].name)
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
 
   // Scan OCR File Handlers
   const handleFileSelect = useCallback((selectedFile: File) => {
     if (!selectedFile) return;
 
-    if (!selectedFile.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
+    const isValidType =
+      /^image\/(jpeg|jpg|png|webp|x-png|pjpeg)$/i.test(selectedFile.type) ||
+      /\.(jpe?g|png|webp)$/i.test(selectedFile.name);
+
+    if (!isValidType) {
       setOcrError("Hanya file format JPG, PNG, atau WEBP yang didukung.");
       return;
     }
@@ -277,9 +357,15 @@ export function TransactionModal({
     setClipboardFeedback(null);
     setExtractedData(null);
 
+    // Synchronously create object URL for instant preview
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setPreviewUrl(objectUrl);
+
     const reader = new FileReader();
     reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
+      if (reader.result) {
+        setPreviewUrl(reader.result as string);
+      }
     };
     reader.readAsDataURL(selectedFile);
   }, []);
@@ -288,6 +374,7 @@ export function TransactionModal({
     (dataTransfer: DataTransfer | null): boolean => {
       if (!dataTransfer) return false;
 
+      // 1. Check dataTransfer.items
       const items = dataTransfer.items;
       if (items && items.length > 0) {
         for (let i = 0; i < items.length; i++) {
@@ -295,11 +382,18 @@ export function TransactionModal({
           if (item.type.startsWith("image/")) {
             const blob = item.getAsFile();
             if (blob) {
-              const ext = blob.type.split("/")[1] || "png";
+              const resolvedMime =
+                blob.type && blob.type.startsWith("image/")
+                  ? blob.type
+                  : item.type && item.type.startsWith("image/")
+                  ? item.type
+                  : "image/png";
+              const ext =
+                resolvedMime.split("/")[1]?.replace("x-", "") || "png";
               const pastedFile = new File(
                 [blob],
                 `struk-clipboard-${Date.now()}.${ext}`,
-                { type: blob.type }
+                { type: resolvedMime }
               );
               handleFileSelect(pastedFile);
               setClipboardFeedback({
@@ -317,11 +411,15 @@ export function TransactionModal({
         }
       }
 
+      // 2. Fallback to dataTransfer.files
       const files = dataTransfer.files;
       if (files && files.length > 0) {
         for (let i = 0; i < files.length; i++) {
           const f = files[i];
-          if (f.type.startsWith("image/")) {
+          if (
+            f.type.startsWith("image/") ||
+            /\.(jpe?g|png|webp)$/i.test(f.name)
+          ) {
             handleFileSelect(f);
             setClipboardFeedback({
               type: "success",
@@ -349,33 +447,32 @@ export function TransactionModal({
     const handleGlobalPaste = (e: ClipboardEvent) => {
       const activeEl = document.activeElement as HTMLElement | null;
       const target = e.target as HTMLElement | null;
-      const isTextInput =
-        (target &&
-          (target.tagName === "INPUT" ||
-            target.tagName === "TEXTAREA" ||
-            target.isContentEditable)) ||
-        (activeEl &&
-          (activeEl.tagName === "INPUT" ||
-            activeEl.tagName === "TEXTAREA" ||
-            activeEl.isContentEditable));
 
-      if (isTextInput) return;
+      const hasImage = hasImageInClipboard(e.clipboardData);
 
-      const handled = extractImageFromClipboard(e.clipboardData);
-      if (handled) {
+      // If clipboard contains an image, always capture it for scan preview
+      if (hasImage) {
         e.preventDefault();
-      } else {
-        setClipboardFeedback({
-          type: "error",
-          message:
-            "Clipboard tidak berisi file gambar. Silakan salin gambar struk atau gunakan screenshot (Win + Shift + S).",
-        });
-        setTimeout(() => {
-          setClipboardFeedback((prev) =>
-            prev?.type === "error" ? null : prev
-          );
-        }, 5000);
+        extractImageFromClipboard(e.clipboardData);
+        return;
       }
+
+      // If typing in an editable text input and clipboard has text, let default paste happen
+      if (isEditableTextInput(activeEl) || isEditableTextInput(target)) {
+        return;
+      }
+
+      // User pressed Ctrl+V outside editable inputs but clipboard has no image
+      setClipboardFeedback({
+        type: "error",
+        message:
+          "Clipboard tidak berisi file gambar. Silakan salin gambar struk atau gunakan screenshot (Win + Shift + S).",
+      });
+      setTimeout(() => {
+        setClipboardFeedback((prev) =>
+          prev?.type === "error" ? null : prev
+        );
+      }, 5000);
     };
 
     window.addEventListener("paste", handleGlobalPaste);
@@ -1045,16 +1142,29 @@ export function TransactionModal({
                         <button
                           type="button"
                           onClick={() => {
+                            fileInputRef.current?.click();
+                          }}
+                          className="p-2 text-gray-500 hover:text-[#107c74] rounded-full border border-gray-200 hover:bg-white transition"
+                          title="Ganti Foto"
+                          aria-label="Ganti Foto"
+                        >
+                          <Upload size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
                             setFile(null);
-                            if (previewUrl) {
+                            if (previewUrl && previewUrl.startsWith("blob:")) {
                               URL.revokeObjectURL(previewUrl);
-                              setPreviewUrl(null);
                             }
+                            setPreviewUrl(null);
                             setExtractedData(null);
                             setOcrError(null);
+                            setClipboardFeedback(null);
                           }}
                           className="p-2 text-gray-400 hover:text-rose-600 rounded-full border border-gray-200 hover:bg-white transition"
-                          title="Ganti Foto"
+                          title="Hapus Foto"
+                          aria-label="Hapus Foto"
                         >
                           <Trash2 size={14} />
                         </button>

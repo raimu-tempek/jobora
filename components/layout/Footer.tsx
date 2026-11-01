@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquarePlus } from "lucide-react";
+import Image from "next/image";
 
 export interface FooterProps {
   onOpenFeedback?: () => void;
@@ -13,12 +13,13 @@ export function Footer({ onOpenFeedback }: FooterProps) {
         {/* Sisi Kiri: Brand & Tagline */}
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#107c74] to-[#0d6861] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-              J
-            </div>
-            <span className="font-heading font-bold text-sm tracking-tight text-[#107c74]">
-              Jobora
-            </span>
+            <Image
+              src="/images/jobora-logo.svg"
+              alt="Jobora"
+              width={112}
+              height={28}
+              className="h-7 w-auto object-contain"
+            />
           </div>
           <span className="hidden sm:inline text-gray-300">•</span>
           <p className="text-gray-500 font-normal">
@@ -26,17 +27,28 @@ export function Footer({ onOpenFeedback }: FooterProps) {
           </p>
         </div>
 
-        {/* Sisi Kanan: Link Kritik & Saran & Hak Cipta */}
+        {/* Sisi Kanan: Link Kritik dan Saran, Donasi & Hak Cipta */}
         <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
           <button
             type="button"
             onClick={onOpenFeedback}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#107c74] hover:text-[#0d6861] hover:underline underline-offset-4 transition cursor-pointer focus:outline-none"
+            className="text-xs font-semibold text-[#107c74] hover:text-[#0d6861] hover:underline underline-offset-4 transition cursor-pointer focus:outline-none"
             aria-label="Buka formulir Kritik dan Saran"
           >
-            <MessageSquarePlus size={14} className="text-[#107c74]" />
-            <span>Kritik & Saran</span>
+            Kritik dan Saran
           </button>
+
+          <span className="text-gray-300">•</span>
+
+          <a
+            href="https://tako.id/shials"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-semibold text-[#107c74] hover:text-[#0d6861] hover:underline underline-offset-4 transition cursor-pointer focus:outline-none"
+            aria-label="Donasi untuk Jobora"
+          >
+            Donasi
+          </a>
 
           <span className="text-gray-300">•</span>
 

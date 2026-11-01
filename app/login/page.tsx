@@ -9,7 +9,6 @@ import { AuthVisualHero } from "@/components/auth/AuthVisualHero";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import {
-  Sparkles,
   Eye,
   EyeOff,
   AlertCircle,
@@ -103,15 +102,17 @@ function LoginForm() {
       <div className="md:hidden flex flex-col items-center mb-6 text-center w-full">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 mb-3 focus:outline-none"
+          className="inline-flex items-center justify-center mb-4 focus:outline-none"
           aria-label="Jobora Home"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#107c74] text-white flex items-center justify-center shadow-xs">
-            <Sparkles size={18} />
-          </div>
-          <span className="font-heading text-2xl font-bold tracking-tight text-[#107c74]">
-            Jobora
-          </span>
+          <Image
+            src="/images/jobora-logo.svg"
+            alt="Jobora"
+            width={175}
+            height={44}
+            priority
+            className="h-11 w-auto object-contain"
+          />
         </Link>
         <div className="w-full max-w-[320px] p-3 rounded-2xl bg-gradient-to-br from-[#0c534d] via-[#107c74] to-[#073934] text-white flex items-center gap-3 shadow-md">
           <div className="w-14 h-14 shrink-0 flex items-center justify-center">

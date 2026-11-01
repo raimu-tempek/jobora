@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   ChevronDown,
@@ -124,9 +125,15 @@ export function TopNavigation({
       <div className={styles.inner}>
         {/* Left Section: Brand */}
         <div className={styles.leftSection}>
-          <Link href="/dashboard" className={styles.brand}>
-            <div className={styles.logoIcon}>J</div>
-            <span className={styles.wordmark}>Jobora</span>
+          <Link href="/dashboard" className={styles.brand} aria-label="Jobora Home">
+            <Image
+              src="/images/jobora-logo.svg"
+              alt="Jobora"
+              width={160}
+              height={40}
+              priority
+              className={styles.brandLogo}
+            />
           </Link>
         </div>
 

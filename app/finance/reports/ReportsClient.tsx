@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FinanceSubnav } from "@/components/finance/FinanceSubnav";
 import {
@@ -11,7 +11,7 @@ import {
 import {
   getAccounts,
   getTransactions,
-  getFinanceSummary,
+  migrateLocalStorageToSupabaseIfNeeded,
 } from "@/lib/finance/service";
 import { formatIDR } from "@/lib/finance/format";
 import { Select } from "@/components/ui/select";
@@ -82,20 +82,62 @@ export function ReportsClient({ userId, userName }: ReportsClientProps) {
     customEnd,
   ]);
 
-  const loadData = () => {
-    if (!userId) return;
-    setAccounts(getAccounts(userId));
-    setTransactions(getTransactions(userId, dateFilter));
-  };
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    if (!userId || userId === "guest-user") {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await migrateLocalStorageToSupabaseIfNeeded(userId);
+      const [accs, txs] = await Promise.all([
+        getAccounts(userId),
+        getTransactions(userId, dateFilter),
+      ]);
+      setAccounts(accs);
+      setTransactions(txs);
+    } catch (err: any) {
+      console.error("Error loading reports data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, dateFilter]);
 
   useEffect(() => {
     loadData();
   }, [userId, dateFilter]);
 
-  // Summaries
+  // Summaries derived reactively from loaded accounts and transactions
   const summary = useMemo(() => {
-    return getFinanceSummary(userId, dateFilter);
-  }, [userId, dateFilter, accounts, transactions]);
+    const totalBalance = accounts.reduce(
+      (sum, acc) => sum + (acc.current_balance ?? acc.initial_balance ?? 0),
+      0
+    );
+
+    let totalIncome = 0;
+    let totalExpenses = 0;
+
+    for (const t of transactions) {
+      if (t.type === "income") {
+        totalIncome += Math.round(t.amount);
+      } else if (t.type === "expense") {
+        totalExpenses += Math.round(t.amount);
+      }
+    }
+
+    const netCashFlow = totalIncome - totalExpenses;
+
+    return {
+      totalBalance,
+      totalIncome,
+      totalExpenses,
+      netCashFlow,
+      transactionCount: transactions.length,
+    };
+  }, [accounts, transactions]);
 
   // Breakdown by category
   const categoryBreakdown = useMemo(() => {

@@ -35,6 +35,13 @@
   text-decoration: none;
 }
 
+.brandLogo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
 .logoIcon {
   width: 32px;
   height: 32px;
@@ -169,11 +176,11 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateX(-50%) translateY(-4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 }
 

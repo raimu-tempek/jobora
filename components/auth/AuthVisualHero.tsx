@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Sparkles, CheckCircle2, TrendingUp, Briefcase } from "lucide-react";
+import { CheckCircle2, TrendingUp, Briefcase } from "lucide-react";
 
 export function AuthVisualHero() {
   return (
@@ -19,19 +19,18 @@ export function AuthVisualHero() {
       <div className="relative z-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-white/40 rounded-xl"
+          className="inline-flex items-center group focus:outline-none focus:ring-2 focus:ring-white/40 rounded-2xl"
           aria-label="Kembali ke Beranda Jobora"
         >
-          <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 text-white flex items-center justify-center shadow-md shadow-black/10 group-hover:bg-white/25 transition">
-            <Sparkles size={20} className="text-white" />
-          </div>
-          <div>
-            <span className="font-heading text-2xl font-bold tracking-tight text-white drop-shadow-xs">
-              Jobora
-            </span>
-            <span className="block text-[11px] font-medium tracking-wider text-emerald-100/80 uppercase -mt-1">
-              Career & Finance Hub
-            </span>
+          <div className="bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg shadow-black/15 border border-white/60 flex items-center transition-transform group-hover:scale-[1.02]">
+            <Image
+              src="/images/jobora-logo.svg"
+              alt="Jobora"
+              width={160}
+              height={40}
+              priority
+              className="h-10 w-auto object-contain"
+            />
           </div>
         </Link>
       </div>

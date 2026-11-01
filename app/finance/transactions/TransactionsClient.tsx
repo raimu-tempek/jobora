@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FinanceSubnav } from "@/components/finance/FinanceSubnav";
 import { TransactionModal } from "@/components/finance/modals/TransactionModal";
@@ -18,6 +18,7 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  migrateLocalStorageToSupabaseIfNeeded,
 } from "@/lib/finance/service";
 import { formatIDR, formatDateIndo } from "@/lib/finance/format";
 import { Select } from "@/components/ui/select";
@@ -62,23 +63,40 @@ export function TransactionsClient({
   const [editingTx, setEditingTx] = useState<FinancialTransaction | null>(null);
   const [selectedTxDetail, setSelectedTxDetail] =
     useState<FinancialTransaction | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = () => {
-    if (!userId) return;
-    const accs = getAccounts(userId);
-    const cats = getCategories(userId);
-    const txs = getTransactions(userId);
-    setAccounts(accs);
-    setCategories(cats);
-    setTransactions(txs);
-
-    if (selectedTxDetail) {
-      const refreshed = txs.find((t) => t.id === selectedTxDetail.id);
-      if (refreshed) {
-        setSelectedTxDetail(refreshed);
-      }
+  const loadData = useCallback(async () => {
+    if (!userId || userId === "guest-user") {
+      setIsLoading(false);
+      return;
     }
-  };
+
+    try {
+      setIsLoading(true);
+      await migrateLocalStorageToSupabaseIfNeeded(userId);
+
+      const [accs, cats, txs] = await Promise.all([
+        getAccounts(userId),
+        getCategories(userId),
+        getTransactions(userId),
+      ]);
+
+      setAccounts(accs);
+      setCategories(cats);
+      setTransactions(txs);
+
+      if (selectedTxDetail) {
+        const refreshed = txs.find((t) => t.id === selectedTxDetail.id);
+        if (refreshed) {
+          setSelectedTxDetail(refreshed);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error loading transactions:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, selectedTxDetail]);
 
   useEffect(() => {
     loadData();
@@ -135,23 +153,31 @@ export function TransactionsClient({
     return filteredTransactions.slice(start, start + itemsPerPage);
   }, [filteredTransactions, currentPage]);
 
-  const handleSaveTransaction = (data: Partial<FinancialTransaction>) => {
-    if (editingTx) {
-      updateTransaction(userId, editingTx.id, data);
-    } else {
-      createTransaction(userId, data as any);
+  const handleSaveTransaction = async (data: Partial<FinancialTransaction>) => {
+    try {
+      if (editingTx) {
+        await updateTransaction(userId, editingTx.id, data);
+      } else {
+        await createTransaction(userId, data as any);
+      }
+      setEditingTx(null);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || "Gagal menyimpan transaksi.");
     }
-    setEditingTx(null);
-    loadData();
   };
 
-  const handleDeleteTransaction = (tx: FinancialTransaction) => {
+  const handleDeleteTransaction = async (tx: FinancialTransaction) => {
     if (confirm(`Yakin ingin menghapus transaksi "${tx.title}"?`)) {
-      deleteTransaction(userId, tx.id);
-      if (selectedTxDetail?.id === tx.id) {
-        setSelectedTxDetail(null);
+      try {
+        await deleteTransaction(userId, tx.id);
+        if (selectedTxDetail?.id === tx.id) {
+          setSelectedTxDetail(null);
+        }
+        await loadData();
+      } catch (err: any) {
+        alert(err.message || "Gagal menghapus transaksi.");
       }
-      loadData();
     }
   };
 

@@ -9,8 +9,20 @@ import { cn } from "@/lib/utils";
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "Jobora — Job Journey Tracker",
+  title: {
+    default: "Jobora | Career & Finance Tracker",
+    template: "Jobora | Career & Finance Tracker",
+  },
   description: "Pantau dan kelola proses lamaran kerja secara rapi dan terstruktur",
+  icons: {
+    icon: [
+      { url: "/images/jobora-icon.png", sizes: "256x256", type: "image/png" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: [
+      { url: "/images/jobora-icon.png", sizes: "256x256", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

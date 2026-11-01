@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FinanceSubnav } from "@/components/finance/FinanceSubnav";
 import { BudgetModal } from "@/components/finance/modals/BudgetModal";
@@ -13,6 +13,7 @@ import {
   getBudgets,
   upsertBudget,
   deleteBudget,
+  migrateLocalStorageToSupabaseIfNeeded,
 } from "@/lib/finance/service";
 import { formatIDR, formatDateMonthIndo } from "@/lib/finance/format";
 import {
@@ -40,12 +41,29 @@ export function BudgetsClient({ userId, userName }: BudgetsClientProps) {
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<FinancialBudget | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = () => {
-    if (!userId) return;
-    setCategories(getCategories(userId));
-    setBudgets(getBudgets(userId, currentMonth));
-  };
+  const loadData = useCallback(async () => {
+    if (!userId || userId === "guest-user") {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await migrateLocalStorageToSupabaseIfNeeded(userId);
+      const [cats, bgs] = await Promise.all([
+        getCategories(userId),
+        getBudgets(userId, currentMonth),
+      ]);
+      setCategories(cats);
+      setBudgets(bgs);
+    } catch (err: any) {
+      console.error("Error loading budgets:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, currentMonth]);
 
   useEffect(() => {
     loadData();
@@ -72,24 +90,33 @@ export function BudgetsClient({ userId, userName }: BudgetsClientProps) {
     };
   }, [budgets]);
 
-  const handleSaveBudget = (
+  const handleSaveBudget = async (
     categoryId: string,
     month: string,
     amount: number
   ) => {
-    upsertBudget(userId, categoryId, month, amount);
-    setEditingBudget(null);
-    loadData();
+    try {
+      await upsertBudget(userId, categoryId, month, amount);
+      setEditingBudget(null);
+      setIsModalOpen(false);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || "Gagal menyimpan anggaran.");
+    }
   };
 
-  const handleDeleteBudget = (budget: FinancialBudget) => {
+  const handleDeleteBudget = async (budget: FinancialBudget) => {
     if (
       confirm(
         `Hapus anggaran kategori "${budget.category_name}" untuk bulan ${budget.month}?`
       )
     ) {
-      deleteBudget(userId, budget.id);
-      loadData();
+      try {
+        await deleteBudget(userId, budget.id);
+        await loadData();
+      } catch (err: any) {
+        alert(err.message || "Gagal menghapus anggaran.");
+      }
     }
   };
 

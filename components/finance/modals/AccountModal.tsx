@@ -32,7 +32,7 @@ export function AccountModal({
   onSave,
   initialData,
   onDelete,
-  canDelete = false,
+  canDelete = true,
 }: AccountModalProps) {
   useBodyScrollLock(isOpen);
   const isEditing = Boolean(initialData);
@@ -184,7 +184,7 @@ export function AccountModal({
           </div>
 
           <div className="pt-2 flex items-center justify-between border-t border-gray-100">
-            {isEditing && onDelete && initialData && canDelete ? (
+            {isEditing && onDelete && initialData ? (
               <button
                 type="button"
                 onClick={() => onDelete(initialData)}

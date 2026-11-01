@@ -33,6 +33,12 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleClose = () => {
+    if (isSubmitting) return;
+    setErrorMessage(null);
+    onClose();
+  };
+
   // Close on Escape key (if not currently submitting)
   useEffect(() => {
     if (!isOpen) return;
@@ -54,12 +60,6 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const handleClose = () => {
-    if (isSubmitting) return;
-    setErrorMessage(null);
-    onClose();
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

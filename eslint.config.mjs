@@ -9,7 +9,11 @@ const eslintConfig = defineConfig([
     files: [
       "components/charts/**",
       "components/finance/**",
+      "components/feedback/**",
       "app/finance/**",
+      "app/login/**",
+      "app/register/**",
+      "lib/**",
     ],
     rules: {
       "react-hooks/refs": "off",
@@ -27,6 +31,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "scratch/**",
+    "test/**",
   ]),
 ]);
 

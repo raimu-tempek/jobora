@@ -34,7 +34,7 @@ export function AccountDetailModal({
   account,
   onEdit,
   onDelete,
-  canDelete = false,
+  canDelete = true,
 }: AccountDetailModalProps) {
   useBodyScrollLock(isOpen);
 
@@ -231,7 +231,7 @@ export function AccountDetailModal({
         {/* Footer Actions */}
         <div className="px-6 py-3.5 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between shrink-0">
           <div>
-            {onDelete && canDelete && (
+            {onDelete && (
               <button
                 type="button"
                 onClick={() => onDelete(account)}

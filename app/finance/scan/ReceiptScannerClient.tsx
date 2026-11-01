@@ -15,6 +15,7 @@ import {
   getCategories,
   createTransaction,
   checkForDuplicateTransaction,
+  migrateLocalStorageToSupabaseIfNeeded,
 } from "@/lib/finance/service";
 import { formatIDR, formatThousand } from "@/lib/finance/format";
 import { CurrencyInput } from "@/components/finance/CurrencyInput";
@@ -80,21 +81,87 @@ export function ReceiptScannerClient({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (userId) {
-      const accs = getAccounts(userId);
-      const cats = getCategories(userId);
-      setAccounts(accs);
-      setCategories(cats);
-      if (accs.length > 0) setSelectedAccountId(accs[0].id);
-      const defExp = cats.find((c) => c.type === "expense");
-      if (defExp) setSelectedCategoryId(defExp.id);
-    }
+    let isCancelled = false;
+
+    const init = async () => {
+      if (!userId || userId === "guest-user") return;
+
+      try {
+        await migrateLocalStorageToSupabaseIfNeeded(userId);
+        const [accs, cats] = await Promise.all([
+          getAccounts(userId),
+          getCategories(userId),
+        ]);
+
+        if (isCancelled) return;
+        setAccounts(accs);
+        setCategories(cats);
+        if (accs.length > 0) setSelectedAccountId(accs[0].id);
+        const defExp = cats.find((c) => c.type === "expense");
+        if (defExp) setSelectedCategoryId(defExp.id);
+      } catch (err) {
+        console.error("Error initializing receipt scanner:", err);
+      }
+    };
+
+    init();
+    return () => {
+      isCancelled = true;
+    };
   }, [userId]);
+
+  // Helper to determine if an element is a real editable text input
+  const isEditableTextInput = (el: HTMLElement | null): boolean => {
+    if (!el) return false;
+    if (el.isContentEditable) return true;
+    if (el.tagName === "TEXTAREA") return true;
+    if (el.tagName === "INPUT") {
+      const input = el as HTMLInputElement;
+      const nonTextTypes = [
+        "file",
+        "checkbox",
+        "radio",
+        "button",
+        "submit",
+        "reset",
+        "image",
+        "range",
+        "color",
+      ];
+      return !nonTextTypes.includes((input.type || "text").toLowerCase());
+    }
+    return false;
+  };
+
+  // Helper to check if clipboard contains an image
+  const hasImageInClipboard = (dt: DataTransfer | null): boolean => {
+    if (!dt) return false;
+    if (dt.items && dt.items.length > 0) {
+      for (let i = 0; i < dt.items.length; i++) {
+        if (dt.items[i].type.startsWith("image/")) return true;
+      }
+    }
+    if (dt.files && dt.files.length > 0) {
+      for (let i = 0; i < dt.files.length; i++) {
+        if (
+          dt.files[i].type.startsWith("image/") ||
+          /\.(jpe?g|png|webp)$/i.test(dt.files[i].name)
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
 
   const handleFileSelect = (selectedFile: File) => {
     if (!selectedFile) return;
 
-    if (!selectedFile.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
+    const isValidType =
+      /^image\/(jpeg|jpg|png|webp|x-png|pjpeg)$/i.test(selectedFile.type) ||
+      /\.(jpe?g|png|webp)$/i.test(selectedFile.name);
+
+    if (!isValidType) {
       setOcrError("Hanya file format JPG, PNG, atau WEBP yang didukung.");
       return;
     }
@@ -103,9 +170,15 @@ export function ReceiptScannerClient({
     setOcrError(null);
     setExtractedData(null);
 
+    // Instant preview using Object URL
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setPreviewUrl(objectUrl);
+
     const reader = new FileReader();
     reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
+      if (reader.result) {
+        setPreviewUrl(reader.result as string);
+      }
     };
     reader.readAsDataURL(selectedFile);
   };
@@ -123,11 +196,18 @@ export function ReceiptScannerClient({
         if (item.type.startsWith("image/")) {
           const blob = item.getAsFile();
           if (blob) {
-            const ext = blob.type.split("/")[1] || "png";
+            const resolvedMime =
+              blob.type && blob.type.startsWith("image/")
+                ? blob.type
+                : item.type && item.type.startsWith("image/")
+                ? item.type
+                : "image/png";
+            const ext =
+              resolvedMime.split("/")[1]?.replace("x-", "") || "png";
             const pastedFile = new File(
               [blob],
               `struk-clipboard-${Date.now()}.${ext}`,
-              { type: blob.type }
+              { type: resolvedMime }
             );
             handleFileSelect(pastedFile);
             setClipboardFeedback({
@@ -150,7 +230,10 @@ export function ReceiptScannerClient({
     if (files && files.length > 0) {
       for (let i = 0; i < files.length; i++) {
         const f = files[i];
-        if (f.type.startsWith("image/")) {
+        if (
+          f.type.startsWith("image/") ||
+          /\.(jpe?g|png|webp)$/i.test(f.name)
+        ) {
           handleFileSelect(f);
           setClipboardFeedback({
             type: "success",
@@ -172,37 +255,34 @@ export function ReceiptScannerClient({
   // Global window paste listener for Ctrl + V
   useEffect(() => {
     const handleGlobalPaste = (e: ClipboardEvent) => {
-      // Don't intercept if user is typing in a text form field
       const activeEl = document.activeElement as HTMLElement | null;
       const target = e.target as HTMLElement | null;
-      const isTextInput =
-        (target &&
-          (target.tagName === "INPUT" ||
-            target.tagName === "TEXTAREA" ||
-            target.isContentEditable)) ||
-        (activeEl &&
-          (activeEl.tagName === "INPUT" ||
-            activeEl.tagName === "TEXTAREA" ||
-            activeEl.isContentEditable));
 
-      if (isTextInput) return;
+      const hasImage = hasImageInClipboard(e.clipboardData);
 
-      const handled = extractImageFromClipboard(e.clipboardData);
-      if (handled) {
+      // If clipboard contains an image, always capture it for receipt scanning
+      if (hasImage) {
         e.preventDefault();
-      } else {
-        // If paste event happened outside text fields but clipboard didn't have an image
-        setClipboardFeedback({
-          type: "error",
-          message:
-            "Clipboard tidak berisi file gambar. Silakan salin gambar struk atau gunakan screenshot (Win + Shift + S).",
-        });
-        setTimeout(() => {
-          setClipboardFeedback((prev) =>
-            prev?.type === "error" ? null : prev
-          );
-        }, 5000);
+        extractImageFromClipboard(e.clipboardData);
+        return;
       }
+
+      // If user is typing in a text field and clipboard contains text, allow standard paste
+      if (isEditableTextInput(activeEl) || isEditableTextInput(target)) {
+        return;
+      }
+
+      // If paste event happened outside text fields but clipboard didn't have an image
+      setClipboardFeedback({
+        type: "error",
+        message:
+          "Clipboard tidak berisi file gambar. Silakan salin gambar struk atau gunakan screenshot (Win + Shift + S).",
+      });
+      setTimeout(() => {
+        setClipboardFeedback((prev) =>
+          prev?.type === "error" ? null : prev
+        );
+      }, 5000);
     };
 
     window.addEventListener("paste", handleGlobalPaste);
@@ -280,7 +360,7 @@ export function ReceiptScannerClient({
 
       // Check duplicate
       if (data.grand_total && data.transaction_date && selectedAccountId) {
-        const dup = checkForDuplicateTransaction(
+        const dup = await checkForDuplicateTransaction(
           userId,
           data.grand_total,
           data.transaction_date,
@@ -351,7 +431,7 @@ export function ReceiptScannerClient({
     setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleConfirmSave = (e: React.FormEvent) => {
+  const handleConfirmSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalAmount = Math.max(0, Math.round(Number(grandTotal) || 0));
     if (finalAmount <= 0) {
@@ -367,35 +447,39 @@ export function ReceiptScannerClient({
       ? `Struk ${merchantName.trim()}`
       : "Struk Belanja";
 
-    createTransaction(userId, {
-      title,
-      type: "expense",
-      amount: finalAmount,
-      date: transactionDate,
-      category_id: selectedCategoryId || undefined,
-      account_id: selectedAccountId,
-      payment_method: paymentMethod,
-      description: `Nomor Struk: ${receiptNumber || "-"}\nWaktu: ${transactionTime || "-"}\nCatatan: ${notes || "-"}`,
-      receipt_url: previewUrl || undefined,
-      receipt_data: {
-        merchant_name: merchantName,
-        transaction_date: transactionDate,
-        transaction_time: transactionTime,
-        receipt_number: receiptNumber,
-        items,
-        subtotal: items.reduce((s, it) => s + (it.subtotal || 0), 0),
-        tax: Number(tax) || 0,
-        discount: Number(discount) || 0,
-        grand_total: finalAmount,
+    try {
+      await createTransaction(userId, {
+        title,
+        type: "expense",
+        amount: finalAmount,
+        date: transactionDate,
+        category_id: selectedCategoryId || undefined,
+        account_id: selectedAccountId,
         payment_method: paymentMethod,
-        suggested_category: categories.find((c) => c.id === selectedCategoryId)
-          ?.name,
-      },
-      input_source: "receipt_ocr",
-    });
+        description: `Nomor Struk: ${receiptNumber || "-"}\nWaktu: ${transactionTime || "-"}\nCatatan: ${notes || "-"}`,
+        receipt_url: previewUrl || undefined,
+        receipt_data: {
+          merchant_name: merchantName,
+          transaction_date: transactionDate,
+          transaction_time: transactionTime,
+          receipt_number: receiptNumber,
+          items,
+          subtotal: items.reduce((s, it) => s + (it.subtotal || 0), 0),
+          tax: Number(tax) || 0,
+          discount: Number(discount) || 0,
+          grand_total: finalAmount,
+          payment_method: paymentMethod,
+          suggested_category: categories.find((c) => c.id === selectedCategoryId)
+            ?.name,
+        },
+        input_source: "receipt_ocr",
+      });
 
-    alert("Transaksi struk berhasil disimpan ke catatan keuangan Anda!");
-    router.push("/finance/transactions");
+      alert("Transaksi struk berhasil disimpan ke catatan keuangan Anda!");
+      router.push("/finance/transactions");
+    } catch (err: any) {
+      alert(err.message || "Gagal menyimpan transaksi struk.");
+    }
   };
 
   return (
@@ -551,14 +635,29 @@ export function ReceiptScannerClient({
                   <button
                     type="button"
                     onClick={() => {
+                      fileInputRef.current?.click();
+                    }}
+                    className="p-2 text-gray-500 hover:text-[#107c74] rounded-full border border-gray-200 hover:bg-gray-50 transition"
+                    title="Ganti Foto"
+                    aria-label="Ganti Foto"
+                  >
+                    <Upload size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       setFile(null);
+                      if (previewUrl && previewUrl.startsWith("blob:")) {
+                        URL.revokeObjectURL(previewUrl);
+                      }
                       setPreviewUrl(null);
                       setExtractedData(null);
                       setOcrError(null);
                       setClipboardFeedback(null);
                     }}
                     className="p-2 text-gray-400 hover:text-rose-600 rounded-full border border-gray-200 hover:bg-gray-50 transition"
-                    title="Ganti Foto"
+                    title="Hapus Foto"
+                    aria-label="Hapus Foto"
                   >
                     <Trash2 size={16} />
                   </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FinanceSubnav } from "@/components/finance/FinanceSubnav";
 import { CategoryModal } from "@/components/finance/modals/CategoryModal";
@@ -10,6 +10,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  migrateLocalStorageToSupabaseIfNeeded,
 } from "@/lib/finance/service";
 import {
   Tags,
@@ -34,11 +35,25 @@ export function CategoriesClient({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] =
     useState<FinancialCategory | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = () => {
-    if (!userId) return;
-    setCategories(getCategories(userId));
-  };
+  const loadData = useCallback(async () => {
+    if (!userId || userId === "guest-user") {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await migrateLocalStorageToSupabaseIfNeeded(userId);
+      const cats = await getCategories(userId);
+      setCategories(cats);
+    } catch (err: any) {
+      console.error("Error loading categories:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId]);
 
   useEffect(() => {
     loadData();
@@ -46,20 +61,34 @@ export function CategoriesClient({
 
   const filtered = categories.filter((c) => c.type === activeTab);
 
-  const handleSaveCategory = (data: Partial<FinancialCategory>) => {
-    if (editingCategory) {
-      updateCategory(userId, editingCategory.id, data);
-    } else {
-      createCategory(userId, data);
+  const handleSaveCategory = async (data: Partial<FinancialCategory>) => {
+    try {
+      if (editingCategory) {
+        await updateCategory(userId, editingCategory.id, data);
+      } else {
+        await createCategory(userId, data);
+      }
+      setEditingCategory(null);
+      setIsModalOpen(false);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || "Gagal menyimpan kategori.");
     }
-    setEditingCategory(null);
-    loadData();
   };
 
-  const handleDeleteCategory = (cat: FinancialCategory) => {
+  const handleDeleteCategory = async (cat: FinancialCategory) => {
+    if (cat.is_default || !cat.user_id) {
+      alert("Kategori bawaan sistem tidak dapat dihapus.");
+      return;
+    }
+
     if (confirm(`Hapus kategori "${cat.name}"?`)) {
-      deleteCategory(userId, cat.id);
-      loadData();
+      try {
+        await deleteCategory(userId, cat.id);
+        await loadData();
+      } catch (err: any) {
+        alert(err.message || "Gagal menghapus kategori.");
+      }
     }
   };
 

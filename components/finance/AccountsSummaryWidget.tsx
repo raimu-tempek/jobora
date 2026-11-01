@@ -82,7 +82,12 @@ export function AccountsSummaryWidget({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {accounts.map((acc) => (
+        {accounts.length === 0 ? (
+          <div className="col-span-full py-6 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl bg-gray-50/40">
+            Belum ada rekening atau dompet. Klik <span className="font-semibold text-[#107c74]">&quot;+ Tambah&quot;</span> untuk menambahkan rekening pertama Anda.
+          </div>
+        ) : (
+          accounts.map((acc) => (
           <div
             key={acc.id}
             role="button"
@@ -128,7 +133,7 @@ export function AccountsSummaryWidget({
                     <Edit2 size={12} />
                   </button>
                 )}
-                {onDeleteAccount && accounts.length > 1 && (
+                {onDeleteAccount && (
                   <button
                     type="button"
                     onClick={(e) => {
@@ -153,7 +158,7 @@ export function AccountsSummaryWidget({
               </span>
             </div>
           </div>
-        ))}
+        )))}
       </div>
     </div>
   );

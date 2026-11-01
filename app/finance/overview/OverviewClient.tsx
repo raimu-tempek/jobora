@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FinanceSubnav } from "@/components/finance/FinanceSubnav";
 import { FinanceKpiCard } from "@/components/finance/FinanceKpiCard";
@@ -34,8 +34,9 @@ import {
   createAccount,
   updateAccount,
   deleteAccount,
-  getFinanceSummary,
+  migrateLocalStorageToSupabaseIfNeeded,
 } from "@/lib/finance/service";
+import { formatIDR } from "@/lib/finance/format";
 import {
   Wallet,
   TrendingUp,
@@ -64,6 +65,8 @@ export function OverviewClient({ userId, userName }: OverviewClientProps) {
   const [categories, setCategories] = useState<FinancialCategory[]>([]);
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
   const [budgets, setBudgets] = useState<FinancialBudget[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Modals state
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
@@ -74,93 +77,154 @@ export function OverviewClient({ userId, userName }: OverviewClientProps) {
   const [editingAccount, setEditingAccount] = useState<FinancialAccount | null>(null);
   const [selectedTxDetail, setSelectedTxDetail] = useState<FinancialTransaction | null>(null);
 
-  const loadData = () => {
-    if (!userId) return;
-    const accs = getAccounts(userId);
-    const cats = getCategories(userId);
-    const txs = getTransactions(userId, dateFilter);
-    const bgs = getBudgets(userId, currentMonthStr);
-
-    setAccounts(accs);
-    setCategories(cats);
-    setTransactions(txs);
-    setBudgets(bgs);
-
-    if (selectedTxDetail) {
-      const refreshed = txs.find((t) => t.id === selectedTxDetail.id);
-      if (refreshed) {
-        setSelectedTxDetail(refreshed);
-      }
+  const loadData = useCallback(async () => {
+    if (!userId || userId === "guest-user") {
+      setIsLoading(false);
+      return;
     }
-  };
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Perform one-time resilient migration from localStorage if needed
+      await migrateLocalStorageToSupabaseIfNeeded(userId);
+
+      const [accs, cats, txs, bgs] = await Promise.all([
+        getAccounts(userId),
+        getCategories(userId),
+        getTransactions(userId, dateFilter),
+        getBudgets(userId, currentMonthStr),
+      ]);
+
+      setAccounts(accs);
+      setCategories(cats);
+      setTransactions(txs);
+      setBudgets(bgs);
+
+      if (selectedTxDetail) {
+        const refreshed = txs.find((t) => t.id === selectedTxDetail.id);
+        if (refreshed) {
+          setSelectedTxDetail(refreshed);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error loading finance overview data:", err);
+      setError(err?.message || "Gagal memuat data keuangan.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, dateFilter, currentMonthStr, selectedTxDetail]);
 
   useEffect(() => {
     loadData();
   }, [userId, dateFilter]);
 
-  // Dynamic Metrics
+  // Dynamic Metrics derived directly from loaded accounts and transactions
   const summary = useMemo(() => {
-    return getFinanceSummary(userId, dateFilter);
-  }, [userId, dateFilter, accounts, transactions]);
+    const totalBalance = accounts.reduce(
+      (sum, acc) => sum + (acc.current_balance ?? acc.initial_balance ?? 0),
+      0
+    );
+
+    let totalIncome = 0;
+    let totalExpenses = 0;
+
+    for (const t of transactions) {
+      if (t.type === "income") {
+        totalIncome += Math.round(t.amount);
+      } else if (t.type === "expense") {
+        totalExpenses += Math.round(t.amount);
+      }
+    }
+
+    const netCashFlow = totalIncome - totalExpenses;
+
+    return {
+      totalBalance,
+      totalIncome,
+      totalExpenses,
+      netCashFlow,
+      transactionCount: transactions.length,
+    };
+  }, [accounts, transactions]);
 
   // Handlers
-  const handleSaveTransaction = (data: Partial<FinancialTransaction>) => {
-    if (editingTx) {
-      const updated = updateTransaction(userId, editingTx.id, data);
-      if (updated && selectedTxDetail?.id === updated.id) {
-        setSelectedTxDetail(updated);
+  const handleSaveTransaction = async (data: Partial<FinancialTransaction>) => {
+    try {
+      if (editingTx) {
+        const updated = await updateTransaction(userId, editingTx.id, data);
+        if (updated && selectedTxDetail?.id === updated.id) {
+          setSelectedTxDetail(updated);
+        }
+      } else {
+        await createTransaction(userId, data as any);
       }
-    } else {
-      createTransaction(userId, data as any);
+      setEditingTx(null);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || "Gagal menyimpan transaksi.");
     }
-    setEditingTx(null);
-    loadData();
   };
 
-  const handleDeleteTransaction = (tx: FinancialTransaction) => {
+  const handleDeleteTransaction = async (tx: FinancialTransaction) => {
     if (confirm(`Apakah Anda yakin ingin menghapus transaksi "${tx.title}"?`)) {
-      deleteTransaction(userId, tx.id);
-      if (selectedTxDetail?.id === tx.id) {
-        setSelectedTxDetail(null);
+      try {
+        await deleteTransaction(userId, tx.id);
+        if (selectedTxDetail?.id === tx.id) {
+          setSelectedTxDetail(null);
+        }
+        await loadData();
+      } catch (err: any) {
+        alert(err.message || "Gagal menghapus transaksi.");
       }
-      loadData();
     }
   };
 
-  const handleProcessTransfer = (transferData: any) => {
-    createTransfer(userId, transferData);
-    loadData();
-  };
-
-  const handleSaveAccount = (accData: Partial<FinancialAccount>) => {
-    if (editingAccount) {
-      updateAccount(userId, editingAccount.id, accData);
-    } else {
-      createAccount(userId, accData);
+  const handleProcessTransfer = async (transferData: any) => {
+    try {
+      await createTransfer(userId, transferData);
+      setIsTransferModalOpen(false);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || "Gagal memproses transfer.");
     }
-    setEditingAccount(null);
-    loadData();
   };
 
-  const handleDeleteAccount = (acc: FinancialAccount) => {
-    if (accounts.length <= 1) {
-      alert("Minimal harus ada 1 akun keuangan.");
+  const handleSaveAccount = async (accData: Partial<FinancialAccount>) => {
+    try {
+      if (editingAccount) {
+        await updateAccount(userId, editingAccount.id, accData);
+      } else {
+        await createAccount(userId, accData);
+      }
+      setEditingAccount(null);
+      setIsAccountModalOpen(false);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || "Gagal menyimpan rekening.");
+    }
+  };
+
+  const handleDeleteAccount = async (acc: FinancialAccount) => {
+    const balanceNominal = acc.current_balance ?? acc.initial_balance ?? 0;
+    const balanceFormatted = formatIDR(balanceNominal);
+
+    const confirmed = window.confirm(
+      `Apakah Anda yakin ingin menghapus rekening "${acc.name}" (${balanceFormatted})?\n\nPERINGATAN: Menghapus rekening ini juga akan menghapus seluruh saldo serta riwayat transaksi dan transfer terkait secara permanen.`
+    );
+
+    if (!confirmed) {
       return;
     }
 
-    if (
-      confirm(
-        `Apakah Anda yakin ingin menghapus akun "${acc.name}"? Transaksi yang terhubung dengan akun ini akan dialihkan ke akun utama secara otomatis.`
-      )
-    ) {
-      try {
-        deleteAccount(userId, acc.id);
-        setIsAccountModalOpen(false);
-        setEditingAccount(null);
-        loadData();
-      } catch (err: any) {
-        alert(err.message || "Gagal menghapus akun.");
-      }
+    try {
+      await deleteAccount(userId, acc.id);
+      setIsAccountModalOpen(false);
+      setEditingAccount(null);
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || "Gagal menghapus rekening.");
     }
   };
 
@@ -395,7 +459,7 @@ export function OverviewClient({ userId, userName }: OverviewClientProps) {
         onSave={handleSaveAccount}
         initialData={editingAccount}
         onDelete={handleDeleteAccount}
-        canDelete={accounts.length > 1}
+        canDelete={true}
       />
 
       <TransactionDetailModal
