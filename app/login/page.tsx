@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { signIn } from "@/lib/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 import { AuthVisualHero } from "@/components/auth/AuthVisualHero";
@@ -18,17 +17,22 @@ import {
 } from "lucide-react";
 
 function LoginForm() {
-  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(() => {
-    const err = searchParams.get("error");
-    if (err === "oauth_error" || err === "oauth_failed") {
-      return "Gagal melakukan autentikasi dengan Google. Silakan coba kembali atau gunakan email dan kata sandi.";
-    }
-    return null;
-  });
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get("error");
+      if (err === "oauth_error" || err === "oauth_failed") {
+        setErrorMessage(
+          "Gagal melakukan autentikasi dengan Google. Silakan coba kembali atau gunakan email dan kata sandi."
+        );
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,7 +62,6 @@ function LoginForm() {
         setIsLoading(false);
       }
     } catch (err: unknown) {
-      // In Next.js, redirect() throws an internal redirect error which should be re-thrown
       if (err && typeof err === "object" && "digest" in err) {
         throw err;
       }
@@ -95,12 +98,12 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-[420px] mx-auto">
       {/* Mobile Branding Header */}
-      <div className="lg:hidden flex flex-col items-center mb-6 text-center">
+      <div className="md:hidden flex flex-col items-center mb-6 text-center w-full">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 mb-2 focus:outline-none"
+          className="inline-flex items-center gap-2 mb-3 focus:outline-none"
           aria-label="Jobora Home"
         >
           <div className="w-9 h-9 rounded-xl bg-[#107c74] text-white flex items-center justify-center shadow-xs">
@@ -110,15 +113,23 @@ function LoginForm() {
             Jobora
           </span>
         </Link>
-        <div className="w-20 h-20 my-1 flex items-center justify-center">
-          <Image
-            src="/images/auth-hero-3d.png"
-            alt="Ilustrasi Karier Jobora"
-            width={120}
-            height={120}
-            className="w-full h-full object-contain drop-shadow-md"
-            priority
-          />
+        <div className="w-full max-w-[320px] p-3 rounded-2xl bg-gradient-to-br from-[#0c534d] via-[#107c74] to-[#073934] text-white flex items-center gap-3 shadow-md">
+          <div className="w-14 h-14 shrink-0 flex items-center justify-center">
+            <Image
+              src="/images/auth-hero-3d.png"
+              alt="Ilustrasi Karier Jobora"
+              width={80}
+              height={80}
+              className="w-full h-full object-contain drop-shadow"
+              priority
+            />
+          </div>
+          <div className="text-left pr-1">
+            <p className="text-xs font-bold leading-tight">Karier Lebih Terarah</p>
+            <p className="text-[11px] text-emerald-100/90 leading-snug mt-0.5">
+              Pantau lamaran dan riwayat kariermu.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -127,7 +138,7 @@ function LoginForm() {
         <h1 className="text-2xl sm:text-[28px] font-extrabold text-[#132a30] font-heading tracking-tight">
           Selamat Datang Kembali
         </h1>
-        <p className="mt-1.5 text-sm text-[#526970]">
+        <p className="mt-1 text-sm text-[#526970] leading-relaxed">
           Masuk ke akun Jobora untuk melanjutkan perjalanan kariermu.
         </p>
       </div>
@@ -173,7 +184,7 @@ function LoginForm() {
             spellCheck={false}
             placeholder="nama@email.com"
             disabled={isLoading || isGoogleLoading}
-            className="w-full h-11 px-3.5 rounded-xl border border-[#d8e2e9] bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
+            className="w-full h-11 px-3.5 rounded-xl border border-[#d8e2e9] bg-[#fbfcfd] focus:bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
           />
         </div>
 
@@ -194,7 +205,7 @@ function LoginForm() {
               autoComplete="current-password"
               placeholder="Masukkan kata sandi"
               disabled={isLoading || isGoogleLoading}
-              className="w-full h-11 pl-3.5 pr-11 rounded-xl border border-[#d8e2e9] bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
+              className="w-full h-11 pl-3.5 pr-11 rounded-xl border border-[#d8e2e9] bg-[#fbfcfd] focus:bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
             />
             <button
               type="button"
@@ -217,7 +228,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isLoading || isGoogleLoading}
-            className="w-full h-11 px-4 rounded-xl bg-[#107c74] hover:bg-[#0d6861] active:bg-[#0b544e] text-white text-sm font-semibold transition-all shadow-xs hover:shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#107c74]/30"
+            className="w-full h-11 px-4 rounded-xl bg-[#107c74] hover:bg-[#0d6861] active:bg-[#09544e] text-white text-sm font-semibold transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#107c74]/30"
           >
             {isLoading ? (
               <>
@@ -249,23 +260,15 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen w-full flex flex-col lg:flex-row bg-[#f8fafc]">
+    <main className="min-h-screen w-full flex flex-col md:flex-row bg-[#f8fafc] overflow-x-hidden">
       {/* Sisi Kiri: Split Screen Visual Hero Area */}
-      <div className="lg:w-1/2 xl:w-[48%] shrink-0">
+      <div className="hidden md:block md:w-5/12 lg:w-1/2 xl:w-[48%] shrink-0">
         <AuthVisualHero />
       </div>
 
       {/* Sisi Kanan: Area Form Autentikasi */}
-      <div className="flex-1 flex flex-col justify-center items-center px-5 py-8 sm:px-10 lg:px-12 xl:px-16 min-h-screen bg-white">
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="animate-spin text-[#107c74]" size={28} />
-            </div>
-          }
-        >
-          <LoginForm />
-        </Suspense>
+      <div className="flex-1 flex flex-col justify-center items-center px-4 py-8 sm:px-8 md:px-8 lg:px-14 xl:px-20 min-h-screen bg-white w-full">
+        <LoginForm />
       </div>
     </main>
   );

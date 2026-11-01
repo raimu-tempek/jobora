@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { manrope, hankenGrotesk } from "@/lib/fonts";
 import "@/styles/tokens.css";
 import "./globals.css";
+import "./tailwind.css";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 

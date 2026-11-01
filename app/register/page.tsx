@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { signUp } from "@/lib/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 import { AuthVisualHero } from "@/components/auth/AuthVisualHero";
@@ -19,17 +18,21 @@ import {
 } from "lucide-react";
 
 function RegisterForm() {
-  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(
-    searchParams.get("error")
-      ? "Gagal menghubungkan autentikasi. Silakan coba lagi."
-      : null
-  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("error")) {
+        setErrorMessage("Gagal menghubungkan autentikasi. Silakan coba lagi.");
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,7 +82,6 @@ function RegisterForm() {
         setIsLoading(false);
       }
     } catch (err: unknown) {
-      // Allow internal Next.js redirect to propagate
       if (err && typeof err === "object" && "digest" in err) {
         throw err;
       }
@@ -116,12 +118,12 @@ function RegisterForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-[420px] mx-auto">
       {/* Mobile Branding Header */}
-      <div className="lg:hidden flex flex-col items-center mb-6 text-center">
+      <div className="md:hidden flex flex-col items-center mb-6 text-center w-full">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 mb-2 focus:outline-none"
+          className="inline-flex items-center gap-2 mb-3 focus:outline-none"
           aria-label="Jobora Home"
         >
           <div className="w-9 h-9 rounded-xl bg-[#107c74] text-white flex items-center justify-center shadow-xs">
@@ -131,15 +133,23 @@ function RegisterForm() {
             Jobora
           </span>
         </Link>
-        <div className="w-20 h-20 my-1 flex items-center justify-center">
-          <Image
-            src="/images/auth-hero-3d.png"
-            alt="Ilustrasi Karier Jobora"
-            width={120}
-            height={120}
-            className="w-full h-full object-contain drop-shadow-md"
-            priority
-          />
+        <div className="w-full max-w-[320px] p-3 rounded-2xl bg-gradient-to-br from-[#0c534d] via-[#107c74] to-[#073934] text-white flex items-center gap-3 shadow-md">
+          <div className="w-14 h-14 shrink-0 flex items-center justify-center">
+            <Image
+              src="/images/auth-hero-3d.png"
+              alt="Ilustrasi Karier Jobora"
+              width={80}
+              height={80}
+              className="w-full h-full object-contain drop-shadow"
+              priority
+            />
+          </div>
+          <div className="text-left pr-1">
+            <p className="text-xs font-bold leading-tight">Karier Lebih Terarah</p>
+            <p className="text-[11px] text-emerald-100/90 leading-snug mt-0.5">
+              Pantau lamaran dan riwayat kariermu.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -148,7 +158,7 @@ function RegisterForm() {
         <h1 className="text-2xl sm:text-[28px] font-extrabold text-[#132a30] font-heading tracking-tight">
           Buat Akun Jobora
         </h1>
-        <p className="mt-1.5 text-sm text-[#526970]">
+        <p className="mt-1 text-sm text-[#526970] leading-relaxed">
           Mulai pantau dan kelola seluruh riwayat lamaran kerjamu.
         </p>
       </div>
@@ -217,7 +227,7 @@ function RegisterForm() {
                 autoComplete="name"
                 placeholder="cth. Rian Pratama"
                 disabled={isLoading || isGoogleLoading}
-                className="w-full h-11 px-3.5 rounded-xl border border-[#d8e2e9] bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
+                className="w-full h-11 px-3.5 rounded-xl border border-[#d8e2e9] bg-[#fbfcfd] focus:bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
               />
             </div>
 
@@ -238,7 +248,7 @@ function RegisterForm() {
                 spellCheck={false}
                 placeholder="nama@email.com"
                 disabled={isLoading || isGoogleLoading}
-                className="w-full h-11 px-3.5 rounded-xl border border-[#d8e2e9] bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
+                className="w-full h-11 px-3.5 rounded-xl border border-[#d8e2e9] bg-[#fbfcfd] focus:bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
               />
             </div>
 
@@ -259,7 +269,7 @@ function RegisterForm() {
                   autoComplete="new-password"
                   placeholder="Minimal 6 karakter"
                   disabled={isLoading || isGoogleLoading}
-                  className="w-full h-11 pl-3.5 pr-11 rounded-xl border border-[#d8e2e9] bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
+                  className="w-full h-11 pl-3.5 pr-11 rounded-xl border border-[#d8e2e9] bg-[#fbfcfd] focus:bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
                 />
                 <button
                   type="button"
@@ -294,7 +304,7 @@ function RegisterForm() {
                   autoComplete="new-password"
                   placeholder="Ulangi kata sandi"
                   disabled={isLoading || isGoogleLoading}
-                  className="w-full h-11 pl-3.5 pr-11 rounded-xl border border-[#d8e2e9] bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
+                  className="w-full h-11 pl-3.5 pr-11 rounded-xl border border-[#d8e2e9] bg-[#fbfcfd] focus:bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#107c74]/20 focus:border-[#107c74] disabled:bg-gray-50 disabled:opacity-60 transition"
                 />
                 <button
                   type="button"
@@ -321,7 +331,7 @@ function RegisterForm() {
               <button
                 type="submit"
                 disabled={isLoading || isGoogleLoading}
-                className="w-full h-11 px-4 rounded-xl bg-[#107c74] hover:bg-[#0d6861] active:bg-[#0b544e] text-white text-sm font-semibold transition-all shadow-xs hover:shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#107c74]/30"
+                className="w-full h-11 px-4 rounded-xl bg-[#107c74] hover:bg-[#0d6861] active:bg-[#09544e] text-white text-sm font-semibold transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#107c74]/30"
               >
                 {isLoading ? (
                   <>
@@ -355,23 +365,15 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <main className="min-h-screen w-full flex flex-col lg:flex-row bg-[#f8fafc]">
+    <main className="min-h-screen w-full flex flex-col md:flex-row bg-[#f8fafc] overflow-x-hidden">
       {/* Sisi Kiri: Split Screen Visual Hero Area */}
-      <div className="lg:w-1/2 xl:w-[48%] shrink-0">
+      <div className="hidden md:block md:w-5/12 lg:w-1/2 xl:w-[48%] shrink-0">
         <AuthVisualHero />
       </div>
 
       {/* Sisi Kanan: Area Form Autentikasi */}
-      <div className="flex-1 flex flex-col justify-center items-center px-5 py-8 sm:px-10 lg:px-12 xl:px-16 min-h-screen bg-white">
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="animate-spin text-[#107c74]" size={28} />
-            </div>
-          }
-        >
-          <RegisterForm />
-        </Suspense>
+      <div className="flex-1 flex flex-col justify-center items-center px-4 py-8 sm:px-8 md:px-8 lg:px-14 xl:px-20 min-h-screen bg-white w-full">
+        <RegisterForm />
       </div>
     </main>
   );
