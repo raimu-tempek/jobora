@@ -46,9 +46,12 @@ export async function middleware(request: NextRequest) {
 
   // Helper to create redirect response while preserving updated auth cookies
   const createRedirect = (targetPath: string) => {
+    // Safety check: if already on target path, never redirect to self (prevents loop)
+    if (pathname === targetPath || pathname === `${targetPath}/`) {
+      return supabaseResponse;
+    }
     const url = request.nextUrl.clone();
     url.pathname = targetPath;
-    url.search = "";
     const redirectResponse = NextResponse.redirect(url);
     // Copy all cookies from supabaseResponse to the redirect response
     supabaseResponse.cookies.getAll().forEach((cookie) => {
@@ -57,28 +60,47 @@ export async function middleware(request: NextRequest) {
     return redirectResponse;
   };
 
-  const isProtectedRoute =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/applications") ||
-    pathname.startsWith("/finance");
-
-  const isAuthRoute =
+  // 1. Explicitly public routes (strictly excluded from unauthenticated protection)
+  const isPublicRoute =
     pathname === "/login" ||
-    pathname === "/register" ||
     pathname.startsWith("/login/") ||
-    pathname.startsWith("/register/");
+    pathname === "/register" ||
+    pathname.startsWith("/register/") ||
+    pathname === "/auth" ||
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/api/");
 
-  // 1. Redirect unauthenticated users away from protected pages to /login
+  // 2. Explicitly protected routes
+  const isProtectedRoute =
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/") ||
+    pathname === "/applications" ||
+    pathname.startsWith("/applications/") ||
+    pathname === "/finance" ||
+    pathname.startsWith("/finance/");
+
+  // Guard A: Unauthenticated user on a public route -> allow directly (NEVER redirect to /login)
+  if (isPublicRoute && !user) {
+    return supabaseResponse;
+  }
+
+  // Guard B: Authenticated user visiting /login or /register -> redirect back to /dashboard
+  if (
+    user &&
+    (pathname === "/login" ||
+      pathname.startsWith("/login/") ||
+      pathname === "/register" ||
+      pathname.startsWith("/register/"))
+  ) {
+    return createRedirect("/dashboard");
+  }
+
+  // Guard C: Unauthenticated user accessing a protected route -> redirect to /login
   if (!user && isProtectedRoute) {
     return createRedirect("/login");
   }
 
-  // 2. Redirect authenticated users away from /login and /register to /dashboard
-  if (user && isAuthRoute) {
-    return createRedirect("/dashboard");
-  }
-
-  // 3. Root path '/' routing: /dashboard if logged in, otherwise /login
+  // Guard D: Root path '/' handling
   if (pathname === "/") {
     return createRedirect(user ? "/dashboard" : "/login");
   }

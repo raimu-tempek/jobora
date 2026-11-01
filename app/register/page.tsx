@@ -26,8 +26,11 @@ function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // If already logged in, redirect directly to /dashboard
+  // If already logged in and no error param present, redirect directly to /dashboard
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("error")) {
+      return;
+    }
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
