@@ -1,5 +1,9 @@
 @import "../styles/tokens.css";
 
+.font-editorial {
+  font-family: "Instrument Serif", "Times New Roman", Georgia, serif;
+}
+
 :root {
   --chart-line: #107c74;
   --chart-grid: #e2e8f0;

@@ -62,6 +62,7 @@ export async function middleware(request: NextRequest) {
 
   // 1. Explicitly public routes (strictly excluded from unauthenticated protection)
   const isPublicRoute =
+    pathname === "/" ||
     pathname === "/login" ||
     pathname.startsWith("/login/") ||
     pathname === "/register" ||
@@ -98,11 +99,6 @@ export async function middleware(request: NextRequest) {
   // Guard C: Unauthenticated user accessing a protected route -> redirect to /login
   if (!user && isProtectedRoute) {
     return createRedirect("/login");
-  }
-
-  // Guard D: Root path '/' handling
-  if (pathname === "/") {
-    return createRedirect(user ? "/dashboard" : "/login");
   }
 
   return supabaseResponse;
