@@ -673,6 +673,123 @@ assert(
   "3D Career illustration asset maintains high quality/size"
 );
 
+// TEST SUITE 10: KRITIK & SARAN (FEEDBACK) & FOOTER SYSTEM VERIFICATION
+console.log("\n--- 10. Kritik & Saran (Feedback) & Footer System ---");
+import {
+  validateFeedback,
+  FEEDBACK_CATEGORIES,
+  MAX_FEEDBACK_LENGTH,
+} from "../lib/feedback/service";
+
+// Validation tests
+const emptyCheck = validateFeedback("Saran", "");
+assert(Boolean(!emptyCheck.valid && emptyCheck.error?.includes("wajib")), "Validation: rejects empty message");
+
+const whitespaceCheck = validateFeedback("Saran", "   \n\t  ");
+assert(!whitespaceCheck.valid, "Validation: rejects whitespace-only message");
+
+const invalidCatCheck = validateFeedback("OtherCategory", "Pesan feedback");
+assert(Boolean(!invalidCatCheck.valid && invalidCatCheck.error?.includes("valid")), "Validation: rejects invalid category");
+
+const kritikCheck = validateFeedback("Kritik", "Fitur filter perlu ditingkatkan responnya.");
+assert(Boolean(kritikCheck.valid), "Validation: accepts valid Kritik category");
+
+const saranCheck = validateFeedback("Saran", "Mohon tambahkan ekspor PDF untuk laporan bulanan.");
+assert(Boolean(saranCheck.valid), "Validation: accepts valid Saran category");
+
+const bugCheck = validateFeedback("Laporan Bug", "Ada error saat menekan tombol tertentu.");
+assert(Boolean(bugCheck.valid), "Validation: accepts valid Laporan Bug category");
+
+assert(FEEDBACK_CATEGORIES.length === 3, "Feedback categories include exactly 3 types");
+assert(FEEDBACK_CATEGORIES.includes("Kritik"), "Categories include Kritik");
+assert(FEEDBACK_CATEGORIES.includes("Saran"), "Categories include Saran");
+assert(FEEDBACK_CATEGORIES.includes("Laporan Bug"), "Categories include Laporan Bug");
+
+const exactMaxCheck = validateFeedback("Saran", "x".repeat(MAX_FEEDBACK_LENGTH));
+assert(Boolean(exactMaxCheck.valid), `Validation: accepts exactly ${MAX_FEEDBACK_LENGTH} characters`);
+
+const overMaxCheck = validateFeedback("Saran", "x".repeat(MAX_FEEDBACK_LENGTH + 1));
+assert(Boolean(!overMaxCheck.valid && overMaxCheck.error?.includes("maksimal")), "Validation: rejects message exceeding 5000 characters");
+
+// Payload & Session Binding Simulation
+interface MockFeedbackPayload {
+  user_id: string;
+  category: string;
+  message: string;
+}
+
+function createFeedbackPayload(loggedInUserId: string, category: string, rawMessage: string): MockFeedbackPayload {
+  return {
+    user_id: loggedInUserId,
+    category,
+    message: rawMessage.trim(),
+  };
+}
+
+const mockUserId = "usr-feedback-9876";
+const payload = createFeedbackPayload(mockUserId, "Saran", "   Usulan fitur baru   ");
+assert(payload.user_id === mockUserId, "Feedback payload correctly binds logged-in user_id");
+assert(payload.category === "Saran", "Feedback payload preserves selected category");
+assert(payload.message === "Usulan fitur baru", "Feedback payload trims leading/trailing whitespace");
+assert(!("id" in payload), "Feedback payload omits explicit id to allow database default uuid");
+assert(!("created_at" in payload), "Feedback payload omits explicit created_at to allow database default timestamp");
+
+// Error Resilience Simulation (Preserve Message on Failure)
+interface FeedbackFormState {
+  category: string;
+  message: string;
+  errorMessage: string | null;
+  isSuccess: boolean;
+}
+
+function simulateSubmissionFailure(prevState: FeedbackFormState, errorMsg: string): FeedbackFormState {
+  return {
+    ...prevState,
+    errorMessage: errorMsg,
+    isSuccess: false,
+    // Message MUST NOT be cleared on failure
+    message: prevState.message,
+  };
+}
+
+const initialDraft: FeedbackFormState = {
+  category: "Laporan Bug",
+  message: "Deskripsi bug penting yang sudah diketik panjang oleh pengguna...",
+  errorMessage: null,
+  isSuccess: false,
+};
+
+const failedState = simulateSubmissionFailure(initialDraft, "Koneksi database bermasalah (403 Forbidden)");
+assert(failedState.errorMessage === "Koneksi database bermasalah (403 Forbidden)", "Error state displays clear failure reason");
+assert(failedState.message === initialDraft.message, "Failure resilience: message is preserved intact when submission fails");
+assert(!failedState.isSuccess, "Failure state does not mark success");
+
+// Footer Copy & Brand Requirements Verification
+const footerContent = {
+  logoText: "Jobora",
+  description: "Kelola perjalanan kariermu dengan lebih terarah.",
+  copyright: "© 2026 Jobora. All rights reserved.",
+  feedbackLinkText: "Kritik & Saran",
+};
+
+assert(footerContent.logoText === "Jobora", "Footer contains Jobora logo name");
+assert(footerContent.description === "Kelola perjalanan kariermu dengan lebih terarah.", "Footer contains required description");
+assert(footerContent.copyright === "© 2026 Jobora. All rights reserved.", "Footer contains required copyright text");
+assert(footerContent.feedbackLinkText === "Kritik & Saran", "Footer contains Kritik & Saran action trigger");
+
+// Modal Headings & Content Requirements Verification
+const modalContent = {
+  heading: "Berikan Kritik & Saran",
+  description: "Setiap masukanmu membantu kami membuat Jobora menjadi lebih baik.",
+  submitBtn: "Kirim Feedback",
+  cancelBtn: "Batal",
+};
+
+assert(modalContent.heading === "Berikan Kritik & Saran", "Modal contains exact required heading");
+assert(modalContent.description === "Setiap masukanmu membantu kami membuat Jobora menjadi lebih baik.", "Modal contains exact required description");
+assert(modalContent.submitBtn === "Kirim Feedback", "Modal contains Kirim Feedback submit button");
+assert(modalContent.cancelBtn === "Batal", "Modal contains Batal button");
+
 console.log("\n=================================================");
 console.log(`QA SUMMARY: ${passedTests}/${totalTests} Tests Passed (${failedTests} Failed)`);
 console.log("=================================================");

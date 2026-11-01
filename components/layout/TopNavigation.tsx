@@ -9,6 +9,7 @@ import {
   LogOut,
   Menu,
   X,
+  MessageSquarePlus,
 } from "lucide-react";
 import { signOut } from "@/lib/auth/actions";
 import styles from "./TopNavigation.module.css";
@@ -19,6 +20,7 @@ export interface TopNavigationProps {
   hasNotification?: boolean;
   onNotificationClick?: () => void;
   onLogout?: () => void;
+  onOpenFeedback?: () => void;
 }
 
 export function TopNavigation({
@@ -27,6 +29,7 @@ export function TopNavigation({
   hasNotification = true,
   onNotificationClick,
   onLogout,
+  onOpenFeedback,
 }: TopNavigationProps) {
   const pathname = usePathname();
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
@@ -241,6 +244,17 @@ export function TopNavigation({
                 </div>
                 <button
                   type="button"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    onOpenFeedback?.();
+                  }}
+                  className={styles.menuItemBtn}
+                >
+                  <MessageSquarePlus size={14} className="text-[#107c74]" />
+                  <span>Kritik & Saran</span>
+                </button>
+                <button
+                  type="button"
                   onClick={handleLogout}
                   className={styles.logoutBtn}
                 >
@@ -314,6 +328,20 @@ export function TopNavigation({
                 );
               })}
             </div>
+          </div>
+
+          <div className="pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => {
+                closeAllMenus();
+                onOpenFeedback?.();
+              }}
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#107c74] text-left cursor-pointer transition"
+            >
+              <MessageSquarePlus size={15} className="text-[#107c74]" />
+              <span>Kritik & Saran</span>
+            </button>
           </div>
         </div>
       )}

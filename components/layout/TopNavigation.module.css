@@ -337,6 +337,28 @@
   gap: 2px;
 }
 
+.menuItemBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: left;
+}
+
+.menuItemBtn:hover {
+  background-color: #f1f5f9;
+  color: #107c74;
+}
+
 .logoutBtn {
   display: flex;
   align-items: center;
